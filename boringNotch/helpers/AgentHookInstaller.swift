@@ -135,6 +135,8 @@ enum AgentHookInstaller {
         "PostToolUse",
         "PermissionRequest",
         "Stop",
+        "SubagentStart",
+        "SubagentStop",
         "SessionEnd",
     ]
 
@@ -225,6 +227,7 @@ enum AgentHookInstaller {
 #!/usr/bin/env python3
 """boring.notch agent status bridge (Claude Code and Codex hooks)."""
 import json
+import fcntl
 import os
 import re
 import sys
@@ -239,7 +242,11 @@ STATE_MAP = {
     "PostToolUse": "running",
     "Notification": "waiting",
     "Stop": "done",
+    "SubagentStart": "running",
+    "SubagentStop": "done",
 }
+
+TERMINAL_EVENTS = {"Stop", "SubagentStop", "SessionEnd"}
 
 
 def sanitize(value):
@@ -261,49 +268,74 @@ def main():
         or payload.get("conversation_id")
         or "unknown"
     )
+    agent_id = payload.get("agent_id") if event in ("SubagentStart", "SubagentStop") else ""
+    if agent_id:
+        session_id = "%s-%s" % (session_id, sanitize(agent_id))
     path = os.path.join(STATUS_DIR, "%s-%s.json" % (tool, session_id))
-
-    if event == "SessionEnd":
-        try:
-            os.remove(path)
-        except OSError:
-            pass
-        return
+    lock_path = path + ".lock"
 
     state = STATE_MAP.get(event, "running")
     if event == "PermissionRequest":
         state = "waiting"
+    if event == "SessionEnd" and tool == "codex":
+        state = "done"
     label = (
         payload.get("message")
         or payload.get("tool_name")
         or payload.get("tool")
         or ""
     )
+    if event == "SessionEnd" and tool == "codex" and not label:
+        label = "Session ended"
     if not isinstance(label, str):
         label = str(label)
 
-    started_at = time.time()
-    try:
-        with open(path) as existing:
-            started_at = json.load(existing).get("startedAt", started_at)
-    except Exception:
-        pass
-
-    data = {
-        "id": "%s-%s" % (tool, session_id),
-        "tool": tool,
-        "state": state,
-        "label": label,
-        "cwd": payload.get("cwd") or os.getcwd(),
-        "startedAt": started_at,
-        "updatedAt": time.time(),
-    }
-
     os.makedirs(STATUS_DIR, exist_ok=True)
-    tmp_path = path + ".tmp"
-    with open(tmp_path, "w") as tmp:
-        json.dump(data, tmp)
-    os.replace(tmp_path, path)
+    turn_id = str(payload.get("turn_id") or "")
+    with open(lock_path, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            if event == "SessionEnd" and tool != "codex":
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+                return
+
+            existing = {}
+            try:
+                with open(path) as existing_file:
+                    existing = json.load(existing_file)
+            except Exception:
+                pass
+
+            if (
+                event not in TERMINAL_EVENTS
+                and state != "done"
+                and existing.get("state") == "done"
+                and turn_id
+                and existing.get("turnID") == turn_id
+            ):
+                return
+
+            started_at = existing.get("startedAt", time.time())
+            data = {
+                "id": "%s-%s" % (tool, session_id),
+                "tool": tool,
+                "state": state,
+                "label": label,
+                "cwd": payload.get("cwd") or os.getcwd(),
+                "startedAt": started_at,
+                "updatedAt": time.time(),
+                "turnID": turn_id,
+            }
+
+            tmp_path = "%s.%s.tmp" % (path, os.getpid())
+            with open(tmp_path, "w") as tmp:
+                json.dump(data, tmp)
+            os.replace(tmp_path, path)
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
 
 
 if __name__ == "__main__":
