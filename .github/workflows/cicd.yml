@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - '*'
+  workflow_dispatch:
 
 # https://stackoverflow.com/a/72408109/6942800
 concurrency:
@@ -19,29 +20,23 @@ permissions:
 
 jobs:
   build:
-    name: Build Boring Notch (${{ matrix.xcode }} on ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-15
-            xcode: "~26.0"
-          - os: macos-26
-            xcode: "^26"
-          - os: xcode-27
-            xcode: "^27"
+    name: Build Boring Notch
+    runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Select Xcode 26
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)/Contents/Developer"
+
       - name: Build
-        uses: mxcl/xcodebuild@d3ee9b419c1be9a988086c58fe0988f32d99cfc5 # v3.6.0
+        run: xcodebuild -project boringNotch.xcodeproj -scheme boringNotch -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+
+      - name: Package app
+        run: ditto -c -k --keepParent build/Build/Products/Release/boringNotch.app boringNotch.zip
+
+      - name: Upload app
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          xcode: ${{ matrix.xcode }}
-          platform: macOS
-          scheme: boringNotch
-          action: build
-          verbosity: xcpretty
-          upload-logs: always
-          configuration: release
+          name: boringNotch
+          path: boringNotch.zip
