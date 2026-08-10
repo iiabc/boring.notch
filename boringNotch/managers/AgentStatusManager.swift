@@ -19,6 +19,7 @@ class AgentStatusManager: ObservableObject {
     private var directorySource: DispatchSourceFileSystemObject?
     private var rescanTask: Task<Void, Never>?
     private var cleanupTimer: Timer?
+    private var notificationSessionID: String?
 
     nonisolated static let statusDirectory: URL =
         FileManager.default.homeDirectoryForCurrentUser
@@ -35,9 +36,23 @@ class AgentStatusManager: ObservableObject {
         }
     }
 
-    var primarySession: AgentSession? { Self.primary(of: sessions) }
+    var primarySession: AgentSession? {
+        if let recentDone = sessions
+            .filter({ $0.state == .done })
+            .max(by: { $0.updatedAt < $1.updatedAt }),
+            Date().timeIntervalSince1970 - recentDone.updatedAt <= Self.doneRetention
+        {
+            return recentDone
+        }
+        return Self.primary(of: sessions)
+    }
+
+    private static let doneRetention: TimeInterval = 20
+    private static let codexRunningRetention: TimeInterval = 5 * 60
+    private static let otherRunningRetention: TimeInterval = 6 * 3600
 
     private init() {
+        AgentHookInstaller.refreshInstalledHookScript()
         try? FileManager.default.createDirectory(
             at: Self.statusDirectory, withIntermediateDirectories: true)
         startWatching()
@@ -81,62 +96,91 @@ class AgentStatusManager: ObservableObject {
             return
         }
         let decoder = JSONDecoder()
+        let now = Date().timeIntervalSince1970
         var loaded: [AgentSession] = []
         for url in files where url.pathExtension == "json" {
             guard let data = try? Data(contentsOf: url),
                 let session = try? decoder.decode(AgentSession.self, from: data)
             else { continue }
+            if Self.isStale(session, now: now) {
+                try? fm.removeItem(at: url)
+                continue
+            }
             loaded.append(session)
         }
         apply(sessions: loaded)
     }
 
+    private static func isStale(_ session: AgentSession, now: TimeInterval) -> Bool {
+        let age = max(0, now - session.updatedAt)
+        switch session.state {
+        case .done:
+            return age > doneRetention
+        case .waiting:
+            return age > otherRunningRetention
+        case .running:
+            let retention = session.tool == .codex
+                ? codexRunningRetention : otherRunningRetention
+            return age > retention
+        }
+    }
+
     private func apply(sessions newSessions: [AgentSession]) {
-        let previousPrimary = Self.primary(of: sessions)
+        let previousSessions = sessions
         sessions = newSessions
         if newSessions.isEmpty, BoringViewCoordinator.shared.currentView == .agents {
             BoringViewCoordinator.shared.currentView = .home
         }
-        notifyIfNeeded(previousPrimary: previousPrimary)
+        notifyIfNeeded(previousSessions: previousSessions)
     }
 
     // MARK: - Notch expansion
 
     private var hideTask: Task<Void, Never>?
 
-    private func notifyIfNeeded(previousPrimary: AgentSession?) {
+    private func notifyIfNeeded(previousSessions: [AgentSession]) {
         guard Defaults[.agentStatusEnabled] else { return }
         let coordinator = BoringViewCoordinator.shared
 
         // Dismiss a waiting card as soon as the session is back to running or gone.
-        if coordinator.expandingView.show && coordinator.expandingView.type == .agentStatus {
-            if let primary = primarySession, primary.state == .running {
+        if let notificationSessionID,
+            coordinator.expandingView.show && coordinator.expandingView.type == .agentStatus
+        {
+            let session = newSession(withID: notificationSessionID)
+            if session == nil || session?.state == .running {
                 hideTask?.cancel()
+                self.notificationSessionID = nil
                 coordinator.toggleExpandingView(status: false, type: .agentStatus)
             }
         }
 
-        guard let primary = primarySession,
-            primary.state == .waiting || primary.state == .done
+        let previousStates = Dictionary(
+            uniqueKeysWithValues: previousSessions.map { ($0.id, $0.state) })
+        guard let changedSession = sessions
+            .filter({ $0.state == .waiting || $0.state == .done })
+            .filter({ previousStates[$0.id] != $0.state })
+            .max(by: { $0.updatedAt < $1.updatedAt })
         else { return }
 
-        let key = "\(primary.id)-\(primary.state.rawValue)"
-        let previousKey = previousPrimary.map { "\($0.id)-\($0.state.rawValue)" }
-        guard key != previousKey else { return }
-
         coordinator.toggleExpandingView(status: true, type: .agentStatus)
+        notificationSessionID = changedSession.id
 
         // Done flashes briefly; waiting stays until resolved, capped at 30s.
-        let timeout: TimeInterval = primary.state == .waiting ? 30 : 3
+        let timeout: TimeInterval = changedSession.state == .waiting ? 30 : 3
         hideTask?.cancel()
         hideTask = Task {
             try? await Task.sleep(for: .seconds(timeout))
             guard !Task.isCancelled else { return }
             await MainActor.run {
+                self.notificationSessionID = nil
                 BoringViewCoordinator.shared.toggleExpandingView(
                     status: false, type: .agentStatus)
             }
         }
+    }
+
+    private func newSession(withID id: String) -> AgentSession? {
+        sessions.first(where: { $0.id == id })
     }
 
     // MARK: - Cleanup
@@ -150,31 +194,6 @@ class AgentStatusManager: ObservableObject {
     }
 
     private func cleanupStaleFiles() {
-        let fm = FileManager.default
-        guard
-            let files = try? fm.contentsOfDirectory(
-                at: Self.statusDirectory,
-                includingPropertiesForKeys: [.contentModificationDateKey])
-        else { return }
-        let now = Date()
-        let decoder = JSONDecoder()
-        var removedAny = false
-        for url in files where url.pathExtension == "json" {
-            let modified =
-                (try? url.resourceValues(forKeys: [.contentModificationDateKey])
-                    .contentModificationDate) ?? now
-            let age = now.timeIntervalSince(modified)
-            var shouldDelete = age > 6 * 3600
-            if !shouldDelete, let data = try? Data(contentsOf: url),
-                let session = try? decoder.decode(AgentSession.self, from: data)
-            {
-                shouldDelete = session.state == .done && age > 20
-            }
-            if shouldDelete {
-                try? fm.removeItem(at: url)
-                removedAny = true
-            }
-        }
-        if removedAny { rescan() }
+        rescan()
     }
 }

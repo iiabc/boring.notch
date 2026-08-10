@@ -39,6 +39,11 @@ enum AgentHookInstaller {
         return text.contains("agent_hook.py codex")
     }
 
+    static func refreshInstalledHookScript() {
+        guard isClaudeInstalled() || isCodexInstalled() else { return }
+        try? writeHookScript()
+    }
+
     // MARK: - Claude Code
 
     private static let claudeEvents: [(event: String, usesMatcher: Bool)] = [
@@ -277,16 +282,12 @@ def main():
     state = STATE_MAP.get(event, "running")
     if event == "PermissionRequest":
         state = "waiting"
-    if event == "SessionEnd" and tool == "codex":
-        state = "done"
     label = (
         payload.get("message")
         or payload.get("tool_name")
         or payload.get("tool")
         or ""
     )
-    if event == "SessionEnd" and tool == "codex" and not label:
-        label = "Session ended"
     if not isinstance(label, str):
         label = str(label)
 
@@ -295,7 +296,7 @@ def main():
     with open(lock_path, "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         try:
-            if event == "SessionEnd" and tool != "codex":
+            if event == "SessionEnd":
                 try:
                     os.remove(path)
                 except OSError:
