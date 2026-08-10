@@ -7,131 +7,44 @@
 
 import SwiftUI
 
-struct AgentExpandedActivity: View {
-    @EnvironmentObject var vm: BoringViewModel
-    @ObservedObject var agentManager = AgentStatusManager.shared
-    let height: CGFloat
+struct AgentSneakPeekLine: View {
+    let session: AgentSession
 
     var body: some View {
-        HStack(spacing: 0) {
-            if let session = agentManager.primarySession {
-                HStack(spacing: 8) {
-                    Image(systemName: session.tool.systemImage)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(session.tool.displayName)
-                            .font(.subheadline)
-                            .foregroundStyle(.white)
-                        Text(session.projectName)
-                            .font(.caption2)
-                            .foregroundStyle(.gray)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 12)
-
-                Rectangle()
-                    .fill(.black)
-                    .frame(width: vm.closedNotchSize.width + 10)
-
-                HStack(spacing: 8) {
-                    VStack(alignment: .trailing, spacing: 1) {
-                        HStack(spacing: 5) {
-                            if agentManager.sessions.count > 1 {
-                                Text("+\(agentManager.sessions.count - 1)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.gray)
-                            }
-                            Text(session.state.statusText)
-                                .font(.subheadline)
-                                .foregroundStyle(session.state.color)
-                        }
-                        detailText(for: session)
-                            .font(.caption2)
-                            .foregroundStyle(.gray)
-                            .lineLimit(1)
-                    }
-                    stateIndicator(for: session.state)
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 12)
+        HStack(alignment: .center) {
+            Image(systemName: session.tool.systemImage)
+            GeometryReader { geo in
+                MarqueeText(
+                    summaryText,
+                    color: session.state == .waiting ? .orange : .gray,
+                    delayDuration: 1.0,
+                    frameWidth: geo.size.width
+                )
             }
         }
-        .frame(height: height, alignment: .center)
+        .foregroundStyle(session.state == .waiting ? .orange : .gray)
+        .padding(.bottom, 10)
     }
 
-    @ViewBuilder
-    private func detailText(for session: AgentSession) -> some View {
-        if !session.label.isEmpty {
-            Text(session.label)
-        } else {
-            Text(timerInterval: session.startedAtDate...Date.distantFuture)
-                .monospacedDigit()
-        }
-    }
-
-    @ViewBuilder
-    private func stateIndicator(for state: AgentState) -> some View {
-        switch state {
-        case .running:
-            ProgressView()
-                .controlSize(.small)
-                .tint(.blue)
+    private var summaryText: String {
+        let base = "\(session.tool.displayName) · \(session.projectName)"
+        switch session.state {
         case .waiting:
-            Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(.orange)
-                .symbolEffect(.pulse, options: .repeating)
+            return session.label.isEmpty
+                ? "\(base) — \(session.state.statusText)"
+                : "\(base) — \(session.label)"
         case .done:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+            return "\(base) — Done in \(Self.elapsedText(for: session))"
+        case .running:
+            return base
         }
     }
-}
 
-struct AgentClosedActivity: View {
-    @EnvironmentObject var vm: BoringViewModel
-    @ObservedObject var agentManager = AgentStatusManager.shared
-    let height: CGFloat
-
-    var body: some View {
-        HStack(spacing: 0) {
-            if let session = agentManager.primarySession {
-                Image(systemName: session.tool.systemImage)
-                    .font(.system(size: max(9, height - 20), weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(
-                        width: max(0, height - 12),
-                        height: max(0, height - 12)
-                    )
-
-                Rectangle()
-                    .fill(.black)
-                    .frame(width: vm.closedNotchSize.width - 4 + (2 * liveActivityEdgeMargin))
-
-                stateDot(session.state)
-                    .frame(
-                        width: max(0, height - 12),
-                        height: max(0, height - 12)
-                    )
-            }
-        }
-        .frame(height: height, alignment: .center)
-    }
-
-    @ViewBuilder
-    private func stateDot(_ state: AgentState) -> some View {
-        let dot = Circle()
-            .fill(state.color)
-            .frame(width: 8, height: 8)
-        if state == .done {
-            dot
-        } else {
-            dot
-                .phaseAnimator([0.35, 1.0]) { content, opacity in
-                    content.opacity(opacity)
-                }
-        }
+    static func elapsedText(for session: AgentSession) -> String {
+        let seconds = max(0, Int(session.updatedAt - session.startedAt))
+        if seconds < 60 { return "\(seconds)s" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m \(seconds % 60)s" }
+        return "\(minutes / 60)h \(minutes % 60)m"
     }
 }
