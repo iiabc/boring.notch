@@ -17,13 +17,8 @@ struct AgentExpandedActivity: View {
             if let session = agentManager.primarySession {
                 HStack(spacing: 8) {
                     Image(systemName: session.tool.systemImage)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
-                        .frame(width: 24, height: 24)
-                        .background(
-                            session.state.color.gradient,
-                            in: RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        )
                     VStack(alignment: .leading, spacing: 1) {
                         Text(session.tool.displayName)
                             .font(.subheadline)
@@ -67,17 +62,6 @@ struct AgentExpandedActivity: View {
             }
         }
         .frame(height: height, alignment: .center)
-        .background(alignment: .bottom) {
-            if let session = agentManager.primarySession {
-                LinearGradient(
-                    colors: [session.state.color.opacity(0.4), .clear],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-                .frame(height: height * 0.85)
-                .allowsHitTesting(false)
-            }
-        }
     }
 
     private func detailText(for session: AgentSession) -> String {
