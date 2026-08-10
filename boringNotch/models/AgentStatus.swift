@@ -2,7 +2,7 @@
 //  AgentStatus.swift
 //  boringNotch
 //
-//  Models for AI coding agent (Claude Code / opencode) session status.
+//  Models for AI coding agent session status.
 //
 
 import Foundation
@@ -10,11 +10,13 @@ import SwiftUI
 
 enum AgentTool: String, Codable {
     case claude
+    case codex
     case opencode
 
     var displayName: String {
         switch self {
         case .claude: "Claude Code"
+        case .codex: "Codex"
         case .opencode: "opencode"
         }
     }
@@ -22,6 +24,7 @@ enum AgentTool: String, Codable {
     var systemImage: String {
         switch self {
         case .claude: "sparkle"
+        case .codex: "terminal.fill"
         case .opencode: "chevron.left.forwardslash.chevron.right"
         }
     }

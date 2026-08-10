@@ -31,6 +31,7 @@
 	<array>
 		<string>/.boringnotch/</string>
 		<string>/.claude/settings.json</string>
+		<string>/.codex/hooks.json</string>
 		<string>/.config/opencode/plugins/</string>
 	</array>
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>

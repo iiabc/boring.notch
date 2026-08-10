@@ -3,8 +3,8 @@
 //  boringNotch
 //
 //  Deploys the status bridge scripts and registers them with
-//  Claude Code (~/.claude/settings.json) and opencode
-//  (~/.config/opencode/plugins/).
+//  Claude Code (~/.claude/settings.json), Codex (~/.codex/hooks.json), and
+//  opencode (~/.config/opencode/plugins/).
 //
 
 import Foundation
@@ -15,6 +15,7 @@ enum AgentHookInstaller {
     static let supportDirectory = home.appendingPathComponent(".boringnotch", isDirectory: true)
     static let hookScriptURL = supportDirectory.appendingPathComponent("agent_hook.py")
     static let claudeSettingsURL = home.appendingPathComponent(".claude/settings.json")
+    static let codexHooksURL = home.appendingPathComponent(".codex/hooks.json")
     static let openCodePluginURL = home.appendingPathComponent(
         ".config/opencode/plugins/boringnotch.js")
 
@@ -29,6 +30,13 @@ enum AgentHookInstaller {
 
     static func isOpenCodeInstalled() -> Bool {
         FileManager.default.fileExists(atPath: openCodePluginURL.path)
+    }
+
+    static func isCodexInstalled() -> Bool {
+        guard let data = try? Data(contentsOf: codexHooksURL),
+            let text = String(data: data, encoding: .utf8)
+        else { return false }
+        return text.contains("agent_hook.py codex")
     }
 
     // MARK: - Claude Code
@@ -47,9 +55,15 @@ enum AgentHookInstaller {
         "/usr/bin/python3 \(hookScriptURL.path) claude \(event)"
     }
 
-    private static func hookEntryContainsBridge(_ entry: [String: Any]) -> Bool {
+    private static func codexHookCommand(for event: String) -> String {
+        "/usr/bin/python3 \(hookScriptURL.path) codex \(event)"
+    }
+
+    private static func hookEntryContainsBridge(_ entry: [String: Any], tool: String) -> Bool {
         guard let hooks = entry["hooks"] as? [[String: Any]] else { return false }
-        return hooks.contains { ($0["command"] as? String)?.contains("agent_hook.py") == true }
+        return hooks.contains {
+            ($0["command"] as? String)?.contains("agent_hook.py \(tool)") == true
+        }
     }
 
     static func installClaude() throws {
@@ -71,7 +85,7 @@ enum AgentHookInstaller {
         var hooks = settings["hooks"] as? [String: Any] ?? [:]
         for (event, usesMatcher) in claudeEvents {
             var entries = hooks[event] as? [[String: Any]] ?? []
-            if entries.contains(where: hookEntryContainsBridge) { continue }
+            if entries.contains(where: { hookEntryContainsBridge($0, tool: "claude") }) { continue }
             var entry: [String: Any] = [
                 "hooks": [
                     ["type": "command", "command": claudeHookCommand(for: event)]
@@ -100,7 +114,7 @@ enum AgentHookInstaller {
 
         for (event, entries) in hooks {
             guard var list = entries as? [[String: Any]] else { continue }
-            list.removeAll(where: hookEntryContainsBridge)
+            list.removeAll(where: { hookEntryContainsBridge($0, tool: "claude") })
             if list.isEmpty {
                 hooks.removeValue(forKey: event)
             } else {
@@ -112,6 +126,76 @@ enum AgentHookInstaller {
         let newData = try JSONSerialization.data(
             withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
         try newData.write(to: claudeSettingsURL, options: .atomic)
+    }
+
+    private static let codexEvents = [
+        "SessionStart",
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PostToolUse",
+        "PermissionRequest",
+        "Stop",
+        "SessionEnd",
+    ]
+
+    static func installCodex() throws {
+        try writeHookScript()
+
+        let fm = FileManager.default
+        var settings: [String: Any] = [:]
+        if fm.fileExists(atPath: codexHooksURL.path),
+            let data = try? Data(contentsOf: codexHooksURL),
+            let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        {
+            settings = parsed
+            let backup = codexHooksURL.appendingPathExtension("boringnotch-backup")
+            if !fm.fileExists(atPath: backup.path) {
+                try? fm.copyItem(at: codexHooksURL, to: backup)
+            }
+        }
+
+        var hooks = settings["hooks"] as? [String: Any] ?? [:]
+        for event in codexEvents {
+            var entries = hooks[event] as? [[String: Any]] ?? []
+            if entries.contains(where: { hookEntryContainsBridge($0, tool: "codex") }) { continue }
+            entries.append([
+                "hooks": [
+                    ["type": "command", "command": codexHookCommand(for: event)]
+                ]
+            ])
+            hooks[event] = entries
+        }
+        settings["hooks"] = hooks
+
+        try fm.createDirectory(
+            at: codexHooksURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let data = try JSONSerialization.data(
+            withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: codexHooksURL, options: .atomic)
+    }
+
+    static func uninstallCodex() throws {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: codexHooksURL.path),
+            let data = try? Data(contentsOf: codexHooksURL),
+            var settings = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            var hooks = settings["hooks"] as? [String: Any]
+        else { return }
+
+        for (event, entries) in hooks {
+            guard var list = entries as? [[String: Any]] else { continue }
+            list.removeAll(where: { hookEntryContainsBridge($0, tool: "codex") })
+            if list.isEmpty {
+                hooks.removeValue(forKey: event)
+            } else {
+                hooks[event] = list
+            }
+        }
+        settings["hooks"] = hooks
+
+        let newData = try JSONSerialization.data(
+            withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
+        try newData.write(to: codexHooksURL, options: .atomic)
     }
 
     // MARK: - opencode
@@ -139,7 +223,7 @@ enum AgentHookInstaller {
 
     private static let hookScriptSource = #"""
 #!/usr/bin/env python3
-"""boring.notch agent status bridge (Claude Code hooks)."""
+"""boring.notch agent status bridge (Claude Code and Codex hooks)."""
 import json
 import os
 import re
@@ -171,7 +255,12 @@ def main():
     except Exception:
         payload = {}
 
-    session_id = sanitize(payload.get("session_id") or "unknown")
+    session_id = sanitize(
+        payload.get("session_id")
+        or payload.get("thread_id")
+        or payload.get("conversation_id")
+        or "unknown"
+    )
     path = os.path.join(STATUS_DIR, "%s-%s.json" % (tool, session_id))
 
     if event == "SessionEnd":
@@ -182,7 +271,14 @@ def main():
         return
 
     state = STATE_MAP.get(event, "running")
-    label = payload.get("message") or payload.get("tool_name") or ""
+    if event == "PermissionRequest":
+        state = "waiting"
+    label = (
+        payload.get("message")
+        or payload.get("tool_name")
+        or payload.get("tool")
+        or ""
+    )
     if not isinstance(label, str):
         label = str(label)
 
@@ -198,7 +294,7 @@ def main():
         "tool": tool,
         "state": state,
         "label": label,
-        "cwd": payload.get("cwd") or "",
+        "cwd": payload.get("cwd") or os.getcwd(),
         "startedAt": started_at,
         "updatedAt": time.time(),
     }

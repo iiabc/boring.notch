@@ -2,7 +2,7 @@
 //  AgentSettingsView.swift
 //  boringNotch
 //
-//  Settings for AI coding agent (Claude Code / opencode) status integration.
+//  Settings for AI coding agent status integration.
 //
 
 import Defaults
@@ -12,6 +12,7 @@ struct AgentSettings: View {
     @ObservedObject var agentManager = AgentStatusManager.shared
 
     @State private var claudeInstalled = AgentHookInstaller.isClaudeInstalled()
+    @State private var codexInstalled = AgentHookInstaller.isCodexInstalled()
     @State private var openCodeInstalled = AgentHookInstaller.isOpenCodeInstalled()
     @State private var errorMessage: String?
 
@@ -32,6 +33,13 @@ struct AgentSettings: View {
                     uninstall: { try AgentHookInstaller.uninstallClaude() }
                 )
                 integrationRow(
+                    name: "Codex Desktop",
+                    systemImage: "terminal.fill",
+                    installed: codexInstalled,
+                    install: { try AgentHookInstaller.installCodex() },
+                    uninstall: { try AgentHookInstaller.uninstallCodex() }
+                )
+                integrationRow(
                     name: "opencode",
                     systemImage: "chevron.left.forwardslash.chevron.right",
                     installed: openCodeInstalled,
@@ -41,6 +49,10 @@ struct AgentSettings: View {
             } header: {
                 Text("Integrations")
             }
+
+            Text("Codex hooks must be reviewed and trusted in Codex before they become active.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             Section {
                 if agentManager.sessions.isEmpty {
@@ -120,6 +132,7 @@ struct AgentSettings: View {
             errorMessage = error.localizedDescription
         }
         claudeInstalled = AgentHookInstaller.isClaudeInstalled()
+        codexInstalled = AgentHookInstaller.isCodexInstalled()
         openCodeInstalled = AgentHookInstaller.isOpenCodeInstalled()
         agentManager.rescan()
     }
