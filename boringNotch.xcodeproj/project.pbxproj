@@ -72,6 +72,11 @@
 		11CFC6652E09C7B300748C80 /* OnboardingFinishView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CFC6642E09C7B300748C80 /* OnboardingFinishView.swift */; };
 		11D58EA22E760AE100FA8377 /* ImageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D58EA12E760AE100FA8377 /* ImageService.swift */; };
 		11DB26662EDD0BE1001EA0CF /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB26652EDD0BE1001EA0CF /* LyricsService.swift */; };
+		A6E51A01000000000000A502 /* AgentStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E51A01000000000000A501 /* AgentStatus.swift */; };
+		A6E51A01000000000000A504 /* AgentStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E51A01000000000000A503 /* AgentStatusManager.swift */; };
+		A6E51A01000000000000A506 /* AgentStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E51A01000000000000A505 /* AgentStatusView.swift */; };
+		A6E51A01000000000000A508 /* AgentHookInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E51A01000000000000A507 /* AgentHookInstaller.swift */; };
+		A6E51A01000000000000A50A /* AgentSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E51A01000000000000A509 /* AgentSettingsView.swift */; };
 		11DB26732EDD0CDF001EA0CF /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB26712EDD0CDF001EA0CF /* ShortcutsSettingsView.swift */; };
 		11DB26742EDD0CDF001EA0CF /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB266C2EDD0CDF001EA0CF /* GeneralSettingsView.swift */; };
 		11DB26752EDD0CDF001EA0CF /* ShelfSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB26702EDD0CDF001EA0CF /* ShelfSettingsView.swift */; };
@@ -255,6 +260,11 @@
 		11CFC6642E09C7B300748C80 /* OnboardingFinishView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFinishView.swift; sourceTree = "<group>"; };
 		11D58EA12E760AE100FA8377 /* ImageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageService.swift; sourceTree = "<group>"; };
 		11DB26652EDD0BE1001EA0CF /* LyricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsService.swift; sourceTree = "<group>"; };
+		A6E51A01000000000000A501 /* AgentStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatus.swift; sourceTree = "<group>"; };
+		A6E51A01000000000000A503 /* AgentStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusManager.swift; sourceTree = "<group>"; };
+		A6E51A01000000000000A505 /* AgentStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusView.swift; sourceTree = "<group>"; };
+		A6E51A01000000000000A507 /* AgentHookInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentHookInstaller.swift; sourceTree = "<group>"; };
+		A6E51A01000000000000A509 /* AgentSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSettingsView.swift; sourceTree = "<group>"; };
 		11DB26672EDD0CDF001EA0CF /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		11DB26682EDD0CDF001EA0CF /* AdvancedSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsView.swift; sourceTree = "<group>"; };
 		11DB26692EDD0CDF001EA0CF /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
@@ -537,6 +547,7 @@
 				11DB26702EDD0CDF001EA0CF /* ShelfSettingsView.swift */,
 				11DB26712EDD0CDF001EA0CF /* ShortcutsSettingsView.swift */,
 				64FA50FA2F4D6F9E00008A28 /* WebcamSettingsView.swift */,
+				A6E51A01000000000000A509 /* AgentSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -560,6 +571,7 @@
 				5955950C2E900ED800C66711 /* ApplicationRelauncher.swift */,
 				14288E0B2C6F8EC000B9F80C /* AppIcons.swift */,
 				AFAD1670A870402D88BFFE47 /* AudioOutputRouteResolver.swift */,
+				A6E51A01000000000000A507 /* AgentHookInstaller.swift */,
 			);
 			path = helpers;
 			sourceTree = "<group>";
@@ -607,6 +619,7 @@
 			isa = PBXGroup;
 			children = (
 				11DB26652EDD0BE1001EA0CF /* LyricsService.swift */,
+				A6E51A01000000000000A503 /* AgentStatusManager.swift */,
 				11D58EA12E760AE100FA8377 /* ImageService.swift */,
 				F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */,
 				112FB7342CCF16F70015238C /* NotchSpaceManager.swift */,
@@ -727,6 +740,7 @@
 				1163988E2DF5CC870052E6AF /* CalendarModel.swift */,
 				1163988C2DF5CAB40052E6AF /* EventModel.swift */,
 				B19016232CC15B4D00E3F12E /* Constants.swift */,
+				A6E51A01000000000000A501 /* AgentStatus.swift */,
 				14D570C82C5F38890011E668 /* BoringViewModel.swift */,
 				14D570CA2C5F4B2C0011E668 /* BatteryStatusViewModel.swift */,
 				1153BD902D986DB300979FB0 /* PlaybackState.swift */,
@@ -830,6 +844,7 @@
 				B1C974332C642B6D0000E707 /* MarqueeTextView.swift */,
 				B1D365CD2C6A979C0047BDBC /* LiveActivityModifier.swift */,
 				14E9FEA92C70BF610062E83F /* DownloadView.swift */,
+				A6E51A01000000000000A505 /* AgentStatusView.swift */,
 			);
 			path = "Live activities";
 			sourceTree = "<group>";
@@ -995,6 +1010,11 @@
 				5955950D2E900ED800C66711 /* ApplicationRelauncher.swift in Sources */,
 				1100292A2E8691B400035A57 /* FileShareView.swift in Sources */,
 				147163982C5D35B70068B555 /* MusicVisualizer.swift in Sources */,
+				A6E51A01000000000000A502 /* AgentStatus.swift in Sources */,
+				A6E51A01000000000000A504 /* AgentStatusManager.swift in Sources */,
+				A6E51A01000000000000A506 /* AgentStatusView.swift in Sources */,
+				A6E51A01000000000000A508 /* AgentHookInstaller.swift in Sources */,
+				A6E51A01000000000000A50A /* AgentSettingsView.swift in Sources */,
 				11CC44A22CEE614100C7244B /* BoringViewCoordinator.swift in Sources */,
 				B186543C2C6F49AE000B926A /* ShortcutConstants.swift in Sources */,
 				11A45C792E34E63100CEB175 /* MediaChecker.swift in Sources */,

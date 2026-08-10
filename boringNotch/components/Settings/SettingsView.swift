@@ -13,6 +13,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case appearance
     case media
+    case agents
     case calendar
     case osd
     case battery
@@ -29,6 +30,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "General"
         case .appearance: "Appearance"
         case .media: "Media"
+        case .agents: "Agents"
         case .calendar: "Calendar"
         case .osd: "OSD"
         case .battery: "Battery"
@@ -45,6 +47,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "gear"
         case .appearance: "eye"
         case .media: "play.laptopcomputer"
+        case .agents: "terminal"
         case .calendar: "calendar"
         case .osd: "dial.medium.fill"
         case .battery: "battery.100.bolt"
@@ -88,6 +91,8 @@ struct SettingsView: View {
                     Appearance()
                 case .media:
                     Media()
+                case .agents:
+                    AgentSettings()
                 case .calendar:
                     CalendarSettings()
                 case .osd:

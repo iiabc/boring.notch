@@ -290,6 +290,9 @@ extension Defaults.Keys {
     static let selectedDownloadIndicatorStyle = Key<DownloadIndicatorStyle>("selectedDownloadIndicatorStyle", default: DownloadIndicatorStyle.progress)
     static let selectedDownloadIconStyle = Key<DownloadIconStyle>("selectedDownloadIconStyle", default: DownloadIconStyle.onlyAppIcon)
     
+    // MARK: Agents
+    static let agentStatusEnabled = Key<Bool>("agentStatusEnabled", default: true)
+
     // MARK: OSD
     static let osdReplacement = Key<Bool>("osdReplacement", default: false)
     static let inlineOSD = Key<Bool>("inlineOSD", default: false)
