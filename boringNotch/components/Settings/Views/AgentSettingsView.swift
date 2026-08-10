@@ -21,12 +21,6 @@ struct AgentSettings: View {
                 Defaults.Toggle(key: .agentStatusEnabled) {
                     Text("Show agent status in the notch")
                 }
-            } header: {
-                Text("General")
-            } footer: {
-                Text(
-                    "Shows Claude Code and opencode sessions in the notch: running, needs attention, and done states. Status changes briefly expand the notch, like media playback."
-                )
             }
 
             Section {
@@ -34,30 +28,18 @@ struct AgentSettings: View {
                     name: "Claude Code",
                     systemImage: "sparkle",
                     installed: claudeInstalled,
-                    install: {
-                        try AgentHookInstaller.installClaude()
-                    },
-                    uninstall: {
-                        try AgentHookInstaller.uninstallClaude()
-                    }
+                    install: { try AgentHookInstaller.installClaude() },
+                    uninstall: { try AgentHookInstaller.uninstallClaude() }
                 )
                 integrationRow(
                     name: "opencode",
                     systemImage: "chevron.left.forwardslash.chevron.right",
                     installed: openCodeInstalled,
-                    install: {
-                        try AgentHookInstaller.installOpenCode()
-                    },
-                    uninstall: {
-                        try AgentHookInstaller.uninstallOpenCode()
-                    }
+                    install: { try AgentHookInstaller.installOpenCode() },
+                    uninstall: { try AgentHookInstaller.uninstallOpenCode() }
                 )
             } header: {
                 Text("Integrations")
-            } footer: {
-                Text(
-                    "Install writes a bridge script to ~/.boringnotch and registers it with each tool. Existing Claude Code settings are backed up before changes."
-                )
             }
 
             Section {
@@ -114,14 +96,12 @@ struct AgentSettings: View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
                 .frame(width: 20)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(name)
-                Text(installed ? "Installed" : "Not installed")
-                    .font(.caption)
-                    .foregroundStyle(installed ? .green : .secondary)
-            }
+            Text(name)
             Spacer()
             if installed {
+                Text("Installed")
+                    .font(.caption)
+                    .foregroundStyle(.green)
                 Button("Remove") {
                     run(uninstall)
                 }

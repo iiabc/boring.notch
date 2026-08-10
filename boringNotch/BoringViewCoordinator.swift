@@ -399,6 +399,9 @@ class BoringViewCoordinator: ObservableObject {
         didSet {
             if expandingView.show {
                 expandingViewTask?.cancel()
+                // Agent status cards are dismissed by AgentStatusManager
+                // (done: 3s, waiting: until resolved or 30s timeout).
+                if expandingView.type == .agentStatus { return }
                 let duration: TimeInterval = (expandingView.type == .download ? 2 : 3)
                 let currentType = expandingView.type
                 expandingViewTask = Task { [weak self] in

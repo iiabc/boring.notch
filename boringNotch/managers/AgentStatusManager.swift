@@ -99,15 +99,41 @@ class AgentStatusManager: ObservableObject {
 
     // MARK: - Notch expansion
 
+    private var hideTask: Task<Void, Never>?
+
     private func notifyIfNeeded(previousPrimary: AgentSession?) {
-        guard Defaults[.agentStatusEnabled], let primary = primarySession else { return }
-        guard primary.state == .waiting || primary.state == .done else { return }
+        guard Defaults[.agentStatusEnabled] else { return }
+        let coordinator = BoringViewCoordinator.shared
+
+        // Dismiss a waiting card as soon as the session is back to running or gone.
+        if coordinator.expandingView.show && coordinator.expandingView.type == .agentStatus {
+            if let primary = primarySession, primary.state == .running {
+                hideTask?.cancel()
+                coordinator.toggleExpandingView(status: false, type: .agentStatus)
+            }
+        }
+
+        guard let primary = primarySession,
+            primary.state == .waiting || primary.state == .done
+        else { return }
 
         let key = "\(primary.id)-\(primary.state.rawValue)"
         let previousKey = previousPrimary.map { "\($0.id)-\($0.state.rawValue)" }
         guard key != previousKey else { return }
 
-        BoringViewCoordinator.shared.toggleExpandingView(status: true, type: .agentStatus)
+        coordinator.toggleExpandingView(status: true, type: .agentStatus)
+
+        // Done flashes briefly; waiting stays until resolved, capped at 30s.
+        let timeout: TimeInterval = primary.state == .waiting ? 30 : 3
+        hideTask?.cancel()
+        hideTask = Task {
+            try? await Task.sleep(for: .seconds(timeout))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                BoringViewCoordinator.shared.toggleExpandingView(
+                    status: false, type: .agentStatus)
+            }
+        }
     }
 
     // MARK: - Cleanup

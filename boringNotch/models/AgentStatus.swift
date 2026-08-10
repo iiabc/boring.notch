@@ -50,9 +50,9 @@ enum AgentState: String, Codable {
 
     var statusText: String {
         switch self {
-        case .running: "Running"
-        case .waiting: "Needs attention"
-        case .done: "Done"
+        case .running: String(localized: "Running")
+        case .waiting: String(localized: "Needs attention")
+        case .done: String(localized: "Done")
         }
     }
 }
