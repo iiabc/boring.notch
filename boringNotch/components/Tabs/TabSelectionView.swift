@@ -5,6 +5,7 @@
 //  Created by Hugo Persson on 2024-08-25.
 //
 
+import Defaults
 import SwiftUI
 
 struct TabModel: Identifiable {
@@ -21,10 +22,20 @@ let tabs = [
 
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @ObservedObject var agentManager = AgentStatusManager.shared
     @Namespace var animation
+
+    private var visibleTabs: [TabModel] {
+        var result = tabs
+        if Defaults[.agentStatusEnabled] && agentManager.hasActiveSessions {
+            result.append(TabModel(label: "Agents", icon: "terminal", view: .agents))
+        }
+        return result
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(tabs) { tab in
+            ForEach(visibleTabs) { tab in
                     TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view) {
                         withAnimation(.smooth) {
                             coordinator.currentView = tab.view

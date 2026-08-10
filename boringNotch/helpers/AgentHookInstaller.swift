@@ -261,6 +261,7 @@ function remove(sessionID) {
 }
 
 export const BoringNotchPlugin = async ({ directory }) => {
+  let lastSessionID = "unknown"
   return {
     event: async ({ event }) => {
       const props = event.properties || {}
@@ -269,6 +270,7 @@ export const BoringNotchPlugin = async ({ directory }) => {
         (props.info && props.info.id) ||
         (props.status && props.status.sessionID) ||
         "unknown"
+      if (sessionID !== "unknown") lastSessionID = sessionID
       switch (event.type) {
         case "session.status": {
           const status = props.status && props.status.type
@@ -295,6 +297,11 @@ export const BoringNotchPlugin = async ({ directory }) => {
           remove(sessionID)
           break
       }
+    },
+    "tool.execute.before": async (input) => {
+      const sid = (input && input.sessionID) || lastSessionID
+      const tool = input && input.tool ? String(input.tool) : ""
+      write(sid, "running", tool, directory)
     },
   }
 }

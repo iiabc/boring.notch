@@ -94,6 +94,9 @@ class AgentStatusManager: ObservableObject {
     private func apply(sessions newSessions: [AgentSession]) {
         let previousPrimary = Self.primary(of: sessions)
         sessions = newSessions
+        if newSessions.isEmpty, BoringViewCoordinator.shared.currentView == .agents {
+            BoringViewCoordinator.shared.currentView = .home
+        }
         notifyIfNeeded(previousPrimary: previousPrimary)
     }
 
