@@ -293,6 +293,17 @@ extension Defaults.Keys {
     // MARK: Agents
     static let agentStatusEnabled = Key<Bool>("agentStatusEnabled", default: true)
 
+    // MARK: Pomodoro
+    static let pomoEnabled = Key<Bool>("pomoEnabled", default: true)
+    static let pomoWorkDuration = Key<TimeInterval>("pomoWorkDuration", default: 25 * 60)
+    static let pomoShortBreakDuration = Key<TimeInterval>("pomoShortBreakDuration", default: 5 * 60)
+    static let pomoLongBreakDuration = Key<TimeInterval>("pomoLongBreakDuration", default: 15 * 60)
+    static let pomoLongBreakInterval = Key<Int>("pomoLongBreakInterval", default: 4)
+    static let pomoAutoStartNext = Key<Bool>("pomoAutoStartNext", default: true)
+    static let pomoNotchNotifications = Key<Bool>("pomoNotchNotifications", default: true)
+    static let pomoSound = Key<Bool>("pomoSound", default: true)
+    static let pomoShowInNotch = Key<Bool>("pomoShowInNotch", default: true)
+
     // MARK: OSD
     static let osdReplacement = Key<Bool>("osdReplacement", default: false)
     static let inlineOSD = Key<Bool>("inlineOSD", default: false)

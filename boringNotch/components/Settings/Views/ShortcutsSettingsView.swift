@@ -26,6 +26,9 @@ struct Shortcuts: View {
             Section {
                 KeyboardShortcuts.Recorder("Toggle Notch Open:", name: .toggleNotchOpen)
             }
+            Section {
+                KeyboardShortcuts.Recorder("Start or pause Pomodoro:", name: .togglePomo)
+            }
         }
         .accentColor(.effectiveAccent)
         .navigationTitle("Shortcuts")

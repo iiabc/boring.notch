@@ -22,6 +22,7 @@ struct ContentView: View {
     @ObservedObject var musicManager = MusicManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var agentManager = AgentStatusManager.shared
+    @ObservedObject var pomoManager = PomoManager.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
     @State private var hoverTask: Task<Void, Never>?
@@ -38,6 +39,8 @@ struct ContentView: View {
     @Namespace var albumArtNamespace
 
     @Default(.showNotHumanFace) var showNotHumanFace
+    @Default(.pomoEnabled) private var pomoEnabled
+    @Default(.pomoShowInNotch) private var pomoShowInNotch
 
     // Use standardized animations from StandardAnimations enum
     private let animationSpring = StandardAnimations.interactive
@@ -97,6 +100,10 @@ struct ContentView: View {
             && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
         {
             chinWidth = 640
+        } else if (pomoManager.isActive || pomoManager.completionNotice != nil) && pomoEnabled && pomoShowInNotch
+            && vm.notchState == .closed && !vm.hideOnClosed
+        {
+            chinWidth += (2 * max(0, displayClosedNotchHeight - 12) + 20 + 2 * liveActivityEdgeMargin + 2)
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -331,7 +338,12 @@ struct ContentView: View {
                             .frame(width: 76, alignment: .trailing)
                         }
                         .frame(height: displayClosedNotchHeight, alignment: .center)
-                      } else if coordinator.shouldShowSneakPeek(on: vm.screenUUID) && Defaults[.inlineOSD] && (coordinator.sneakPeekState(for: vm.screenUUID).type != .music) && (coordinator.sneakPeekState(for: vm.screenUUID).type != .battery) && vm.notchState == .closed {
+                    } else if (pomoManager.isActive || pomoManager.completionNotice != nil) && pomoEnabled && pomoShowInNotch
+                        && vm.notchState == .closed && !vm.hideOnClosed
+                    {
+                        PomoLiveActivity(height: displayClosedNotchHeight)
+                            .transition(.opacity)
+                    } else if coordinator.shouldShowSneakPeek(on: vm.screenUUID) && Defaults[.inlineOSD] && (coordinator.sneakPeekState(for: vm.screenUUID).type != .music) && (coordinator.sneakPeekState(for: vm.screenUUID).type != .battery) && vm.notchState == .closed {
                           InlineOSD(
                               type: coordinator.binding(for: vm.screenUUID).type,
                               value: coordinator.binding(for: vm.screenUUID).value,
@@ -414,6 +426,8 @@ struct ContentView: View {
                         ShelfView()
                     case .agents:
                         AgentListView()
+                    case .pomo:
+                        PomoTabView()
                     }
                 }
                 .transition(

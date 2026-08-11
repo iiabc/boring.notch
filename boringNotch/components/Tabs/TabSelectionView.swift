@@ -23,10 +23,14 @@ let tabs = [
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @ObservedObject var agentManager = AgentStatusManager.shared
+    @Default(.pomoEnabled) private var pomoEnabled
     @Namespace var animation
 
     private var visibleTabs: [TabModel] {
         var result = tabs
+        if pomoEnabled {
+            result.append(TabModel(label: "Pomo", icon: "timer", view: .pomo))
+        }
         if Defaults[.agentStatusEnabled] && agentManager.hasActiveSessions {
             result.append(TabModel(label: "Agents", icon: "terminal", view: .agents))
         }

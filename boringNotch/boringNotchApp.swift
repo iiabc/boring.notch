@@ -450,6 +450,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        KeyboardShortcuts.onKeyDown(for: .togglePomo) {
+            Task { @MainActor in
+                guard Defaults[.pomoEnabled] else { return }
+                PomoManager.shared.toggle()
+            }
+        }
+
         // Sync notch height with real value on app launch if mode is matchRealNotchSize
         syncNotchHeightIfNeeded()
         

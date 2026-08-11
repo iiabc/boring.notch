@@ -163,6 +163,9 @@
 		B1FEB4992C7686630066EBBC /* PanGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1FEB4982C7686630066EBBC /* PanGesture.swift */; };
 		F1F2A0A100000000000000F1 /* AudioCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F2A0A200000000000000F2 /* AudioCaptureManager.swift */; };
 		F38DE6482D8243E7008B5C6D /* BatteryActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */; };
+		C0DE00000000000000000002 /* PomoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000001 /* PomoManager.swift */; };
+		C0DE00000000000000000004 /* PomoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000003 /* PomoView.swift */; };
+		C0DE00000000000000000006 /* PomodoroSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000005 /* PomodoroSettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -349,6 +352,9 @@
 		B1FEB4982C7686630066EBBC /* PanGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanGesture.swift; sourceTree = "<group>"; };
 		F1F2A0A200000000000000F2 /* AudioCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCaptureManager.swift; sourceTree = "<group>"; };
 		F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryActivityManager.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000001 /* PomoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomoManager.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000003 /* PomoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomoView.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000005 /* PomodoroSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -535,6 +541,7 @@
 		11DB26722EDD0CDF001EA0CF /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				C0DE00000000000000000005 /* PomodoroSettingsView.swift */,
 				11DB26672EDD0CDF001EA0CF /* AboutView.swift */,
 				11DB26682EDD0CDF001EA0CF /* AdvancedSettingsView.swift */,
 				11DB26692EDD0CDF001EA0CF /* AppearanceSettingsView.swift */,
@@ -618,6 +625,7 @@
 		147163B52C5D804B0068B555 /* managers */ = {
 			isa = PBXGroup;
 			children = (
+				C0DE00000000000000000001 /* PomoManager.swift */,
 				11DB26652EDD0BE1001EA0CF /* LyricsService.swift */,
 				A6E51A01000000000000A503 /* AgentStatusManager.swift */,
 				11D58EA12E760AE100FA8377 /* ImageService.swift */,
@@ -840,6 +848,7 @@
 		B18654312C6F45AE000B926A /* Live activities */ = {
 			isa = PBXGroup;
 			children = (
+				C0DE00000000000000000003 /* PomoView.swift */,
 				14D570CC2C5F4BB70011E668 /* BoringBattery.swift */,
 				B1C974332C642B6D0000E707 /* MarqueeTextView.swift */,
 				B1D365CD2C6A979C0047BDBC /* LiveActivityModifier.swift */,
@@ -1059,6 +1068,9 @@
 				149E0B9A2C737D40006418B1 /* WebcamView.swift in Sources */,
 				1471639A2C5D35FF0068B555 /* MusicManager.swift in Sources */,
 				F1F2A0A100000000000000F1 /* AudioCaptureManager.swift in Sources */,
+				C0DE00000000000000000002 /* PomoManager.swift in Sources */,
+				C0DE00000000000000000004 /* PomoView.swift in Sources */,
+				C0DE00000000000000000006 /* PomodoroSettingsView.swift in Sources */,
 				B1B112932C6A577E00093D8F /* MouseTracker.swift in Sources */,
 				B1C448962C9712C4001F0858 /* ActionBar.swift in Sources */,
 				118EBE312E9717DB00D54B5A /* URL+SecurityScoped.swift in Sources */,
