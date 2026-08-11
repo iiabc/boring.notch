@@ -10,7 +10,7 @@ import Combine
 import Defaults
 import SwiftUI
 
-enum SneakContentType {
+enum SneakContentType: String {
     case brightness
     case volume
     case backlight
@@ -49,15 +49,78 @@ struct ExpandedItem {
     var browser: BrowserType = .chromium
 }
 
+enum NotchActivityKind: Equatable {
+    case osd
+    case expanding
+    case pomodoro
+}
+
+struct NotchActivity: Identifiable {
+    let id: String
+    let kind: NotchActivityKind
+    let priority: Int
+    let screenUUID: String?
+    let order: Int
+}
+
+@MainActor
+final class NotchActivityCenter: ObservableObject {
+    @Published private(set) var activities: [NotchActivity] = []
+
+    private var nextOrder = 0
+
+    func present(
+        id: String,
+        kind: NotchActivityKind,
+        priority: Int,
+        screenUUID: String? = nil
+    ) {
+        activities.removeAll { $0.id == id }
+        nextOrder += 1
+        activities.append(
+            NotchActivity(
+                id: id,
+                kind: kind,
+                priority: priority,
+                screenUUID: screenUUID,
+                order: nextOrder
+            )
+        )
+    }
+
+    func dismiss(id: String) {
+        activities.removeAll { $0.id == id }
+    }
+
+    func active(for screenUUID: String?, kind: NotchActivityKind? = nil) -> NotchActivity? {
+        activities
+            .filter { activity in
+                (activity.screenUUID == nil || activity.screenUUID == screenUUID)
+                    && (kind == nil || activity.kind == kind)
+            }
+            .max { left, right in
+                if left.priority != right.priority {
+                    return left.priority < right.priority
+                }
+                return left.order < right.order
+            }
+    }
+}
+
 @MainActor
 class BoringViewCoordinator: ObservableObject {
     static let shared = BoringViewCoordinator()
+
+    let activityCenter = NotchActivityCenter()
 
     @Published var currentView: NotchViews = .home
     @Published var helloAnimationRunning: Bool = false
     private var sneakPeekDispatch: DispatchWorkItem?
     private var expandingViewDispatch: DispatchWorkItem?
     private var osdEnableTask: Task<Void, Never>?
+    private var expandedItems: [String: ExpandedItem] = [:]
+    private var expansionDurations: [String: TimeInterval] = [:]
+    private var expansionTasks: [String: Task<Void, Never>] = [:]
 
     @AppStorage("firstLaunch") var firstLaunch: Bool = true
     @AppStorage("musicLiveActivityEnabled") var musicLiveActivityEnabled: Bool = true
@@ -254,8 +317,15 @@ class BoringViewCoordinator: ObservableObject {
                 }
                 
                 if status {
+                    self.activityCenter.present(
+                        id: self.sneakPeekActivityID(for: uuid),
+                        kind: .osd,
+                        priority: 40,
+                        screenUUID: uuid
+                    )
                     self.scheduleSneakPeekHide(for: uuid, duration: duration)
                 } else {
+                    self.activityCenter.dismiss(id: self.sneakPeekActivityID(for: uuid))
                     self.sneakPeekTasks[uuid]?.cancel()
                     self.sneakPeekTasks[uuid] = nil
                 }
@@ -328,7 +398,8 @@ class BoringViewCoordinator: ObservableObject {
 
     func shouldShowSneakPeek(on screenUUID: String?) -> Bool {
         guard let uuid = screenUUID else { return false }
-        return sneakPeekStates[uuid]?.show == true
+        guard sneakPeekStates[uuid]?.show == true else { return false }
+        return activityCenter.active(for: uuid)?.id == sneakPeekActivityID(for: uuid)
     }
     
     var isAnySneakPeekShowing: Bool {
@@ -369,10 +440,11 @@ class BoringViewCoordinator: ObservableObject {
                          state.show = false
                          // Optional: reset type to something default if needed, but keeping last state is often fine until next show
                          // keeping original logic:
-                         state.type = .music 
-                         self.sneakPeekStates[screenUUID] = state
+                        state.type = .music
+                        self.sneakPeekStates[screenUUID] = state
                     }
                 }
+                self.activityCenter.dismiss(id: self.sneakPeekActivityID(for: screenUUID))
             }
         }
     }
@@ -384,33 +456,106 @@ class BoringViewCoordinator: ObservableObject {
         browser: BrowserType = .chromium
     ) {
         Task { @MainActor in
-            withAnimation(.smooth) {
-                self.expandingView.show = status
-                self.expandingView.type = type
-                self.expandingView.value = value
-                self.expandingView.browser = browser
+            let activityID = self.expandingActivityID(for: type)
+
+            if status {
+                self.expansionTasks[activityID]?.cancel()
+                self.expansionTasks[activityID] = nil
+                self.expandedItems[activityID] = ExpandedItem(
+                    show: true,
+                    type: type,
+                    value: value,
+                    browser: browser
+                )
+                self.expansionDurations[activityID] = type == .agentStatus
+                    ? nil
+                    : (type == .download ? 2 : 3)
+                self.activityCenter.present(
+                    id: activityID,
+                    kind: .expanding,
+                    priority: self.expandingActivityPriority(for: type)
+                )
+            } else {
+                let ids = self.expandedItems
+                    .filter { $0.value.type == type }
+                    .map(\.key)
+                for id in ids {
+                    self.expandedItems.removeValue(forKey: id)
+                    self.expansionDurations.removeValue(forKey: id)
+                    self.expansionTasks[id]?.cancel()
+                    self.expansionTasks[id] = nil
+                    self.activityCenter.dismiss(id: id)
+                }
+            }
+
+            self.refreshExpandingView()
+        }
+    }
+
+    @Published var expandingView: ExpandedItem = .init()
+
+    private func sneakPeekActivityID(for screenUUID: String) -> String {
+        "osd:\(screenUUID)"
+    }
+
+    private func expandingActivityID(for type: SneakContentType) -> String {
+        "expanding:\(type.rawValue)"
+    }
+
+    private func expandingActivityPriority(for type: SneakContentType) -> Int {
+        switch type {
+        case .agentStatus:
+            return 100
+        case .battery:
+            return 80
+        case .download:
+            return 60
+        case .music:
+            return 20
+        default:
+            return 50
+        }
+    }
+
+    private func refreshExpandingView() {
+        let activeActivity = activityCenter.active(for: nil, kind: .expanding)
+        let activeID = activeActivity?.id
+
+        for id in expandedItems.keys {
+            if id == activeID {
+                if let duration = expansionDurations[id], expansionTasks[id] == nil {
+                    scheduleExpansionHide(for: id, duration: duration)
+                }
+            } else {
+                expansionTasks[id]?.cancel()
+                expansionTasks[id] = nil
+            }
+        }
+
+        withAnimation(.smooth) {
+            if let activeID, let item = expandedItems[activeID] {
+                expandingView = item
+            } else {
+                expandingView = .init()
             }
         }
     }
 
-    private var expandingViewTask: Task<Void, Never>?
+    private func scheduleExpansionHide(for activityID: String, duration: TimeInterval) {
+        expansionTasks[activityID] = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(duration))
+            guard !Task.isCancelled else { return }
 
-    @Published var expandingView: ExpandedItem = .init() {
-        didSet {
-            if expandingView.show {
-                expandingViewTask?.cancel()
-                // Agent status cards are dismissed by AgentStatusManager
-                // (done: 3s, waiting: until resolved or 30s timeout).
-                if expandingView.type == .agentStatus { return }
-                let duration: TimeInterval = (expandingView.type == .download ? 2 : 3)
-                let currentType = expandingView.type
-                expandingViewTask = Task { [weak self] in
-                    try? await Task.sleep(for: .seconds(duration))
-                    guard let self = self, !Task.isCancelled else { return }
-                    self.toggleExpandingView(status: false, type: currentType)
-                }
-            } else {
-                expandingViewTask?.cancel()
+            await MainActor.run {
+                guard let self,
+                      self.activityCenter.active(for: nil, kind: .expanding)?.id == activityID
+                else { return }
+
+                self.expandedItems.removeValue(forKey: activityID)
+                self.expansionDurations.removeValue(forKey: activityID)
+                self.expansionTasks[activityID] = nil
+                self.activityCenter.dismiss(id: activityID)
+                self.refreshExpandingView()
             }
         }
     }

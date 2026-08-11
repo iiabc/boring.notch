@@ -134,7 +134,20 @@ final class PomoManager: ObservableObject {
     @Published private(set) var taskTitle = ""
     @Published private(set) var history: [PomoSessionRecord] = []
     @Published private(set) var completionRevision = 0
-    @Published private(set) var completionNotice: PomoCompletionNotice?
+    @Published private(set) var completionNotice: PomoCompletionNotice? {
+        didSet {
+            let activityCenter = BoringViewCoordinator.shared.activityCenter
+            if completionNotice == nil {
+                activityCenter.dismiss(id: "pomodoro")
+            } else {
+                activityCenter.present(
+                    id: "pomodoro",
+                    kind: .pomodoro,
+                    priority: 70
+                )
+            }
+        }
+    }
     @Published private(set) var dataStatusMessage: String?
 
     private var endDate: Date?
