@@ -91,6 +91,50 @@ struct PomodoroSettings: View {
             }
 
             Section {
+                HStack {
+                    Text("Today")
+                    Spacer()
+                    Text("\(manager.todayFocusSessions)/\(dailyGoal) \(String(localized: "sessions"))")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+
+                ProgressView(value: manager.dailyGoalProgress)
+                    .tint(.orange)
+
+                HStack {
+                    Text("Focus time")
+                    Spacer()
+                    Text("\(manager.todayFocusMinutes) \(String(localized: "min"))")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+
+                HStack {
+                    Text("This week")
+                    Spacer()
+                    Text("\(manager.weekFocusMinutes) \(String(localized: "min"))")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+            } header: {
+                Text("Progress")
+            }
+
+            Section {
+                if manager.history.isEmpty {
+                    Text("No completed sessions")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(manager.history) { record in
+                        PomoHistoryRow(record: record)
+                    }
+                }
+            } header: {
+                Text("History")
+            }
+
+            Section {
                 HStack(spacing: 8) {
                     Button("Import") {
                         manager.importHistory()
@@ -158,6 +202,41 @@ struct PomodoroSettings: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
+        }
+    }
+}
+
+private struct PomoHistoryRow: View {
+    let record: PomoSessionRecord
+
+    private var phaseColor: Color {
+        switch record.phase {
+        case .work: return .red
+        case .shortBreak: return .green
+        case .longBreak: return .blue
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: record.phase.symbolName)
+                .foregroundStyle(phaseColor)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(record.taskTitle.isEmpty ? record.phase.title : record.taskTitle)
+                    .lineLimit(1)
+                Text(record.completedAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Text(PomoManager.formatTime(record.duration))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
         }
     }
 }

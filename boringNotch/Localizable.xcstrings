@@ -26799,6 +26799,9 @@
     "Clear" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear" } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清除" } } } },
     "Cancel" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } } } },
     "This only removes completed session records. The current timer will not change." : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "This only removes completed session records. The current timer will not change." } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仅删除已完成的会话记录，不会改变当前计时器。" } } } },
+    "Progress" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Progress" } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "进度" } } } },
+    "History" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History" } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "历史" } } } },
+    "No completed sessions" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No completed sessions" } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无已完成会话" } } } },
     "min" : { "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "min" } }, "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "分钟" } } } }
   },
   "version" : "1.1"
