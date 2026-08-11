@@ -299,6 +299,7 @@ extension Defaults.Keys {
     static let pomoShortBreakDuration = Key<TimeInterval>("pomoShortBreakDuration", default: 5 * 60)
     static let pomoLongBreakDuration = Key<TimeInterval>("pomoLongBreakDuration", default: 15 * 60)
     static let pomoLongBreakInterval = Key<Int>("pomoLongBreakInterval", default: 4)
+    static let pomoDailyGoal = Key<Int>("pomoDailyGoal", default: 4)
     static let pomoAutoStartNext = Key<Bool>("pomoAutoStartNext", default: true)
     static let pomoNotchNotifications = Key<Bool>("pomoNotchNotifications", default: true)
     static let pomoSound = Key<Bool>("pomoSound", default: true)
