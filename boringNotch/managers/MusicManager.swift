@@ -10,7 +10,7 @@ import Defaults
 import SwiftUI
 
 let defaultImage: NSImage = .init(
-    systemSymbolName: "heart.fill",
+    systemSymbolName: "music.note",
     accessibilityDescription: "Album Art"
 )!
 
