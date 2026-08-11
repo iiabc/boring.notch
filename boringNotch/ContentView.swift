@@ -357,7 +357,9 @@ struct ContentView: View {
                        } else if !coordinator.expandingView.show && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
                           BoringFaceAnimation()
                        } else if vm.notchState == .open {
-                           EmptyView()
+                           BoringHeader()
+                               .frame(height: max(24, displayClosedNotchHeight))
+                               .opacity(gestureProgress != 0 ? 1.0 - min(abs(gestureProgress) * 0.1, 0.3) : 1.0)
                         }
                         // New case to enable compact notch on external displays
                         else if !vm.hasNotch {
@@ -410,36 +412,22 @@ struct ContentView: View {
               }
               .zIndex(1)
             if vm.notchState == .open {
-                let headerHeight = max(24, displayClosedNotchHeight)
-
-                VStack(spacing: 0) {
-                    BoringHeader()
-                        .frame(height: headerHeight)
-
-                    VStack {
-                        switch coordinator.currentView {
-                        case .home:
-                            NotchHomeView(
-                                albumArtNamespace: albumArtNamespace,
-                                horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
-                                isHoveringMusicArea: $isHoveringMusicArea
-                            )
-                        case .shelf:
-                            ShelfView()
-                        case .agents:
-                            AgentListView()
-                        case .pomo:
-                            PomoTabView()
-                        }
+                VStack {
+                    switch coordinator.currentView {
+                    case .home:
+                        NotchHomeView(
+                            albumArtNamespace: albumArtNamespace,
+                            horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
+                            isHoveringMusicArea: $isHoveringMusicArea
+                        )
+                    case .shelf:
+                        ShelfView()
+                    case .agents:
+                        AgentListView()
+                    case .pomo:
+                        PomoTabView()
                     }
-                    .frame(
-                        width: vm.notchSize.width,
-                        height: max(0, vm.notchSize.height - headerHeight),
-                        alignment: .top
-                    )
                 }
-                .frame(width: vm.notchSize.width, height: vm.notchSize.height, alignment: .top)
-                .clipShape(currentNotchShape)
                 .transition(
                     .scale(scale: 0.8, anchor: .top)
                     .combined(with: .opacity)

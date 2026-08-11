@@ -28,12 +28,9 @@ struct BoringHeader: View {
             .zIndex(2)
 
             if vm.notchState == .open {
-                Rectangle()
-                    .fill(NSScreen.screen(withUUID: coordinator.selectedScreenUUID)?.safeAreaInsets.top ?? 0 > 0 ? .black : .clear)
+                Spacer()
                     .frame(width: vm.closedNotchSize.width)
-                    .mask {
-                        NotchShape()
-                    }
+                    .allowsHitTesting(false)
             }
 
             HStack(spacing: 4) {
