@@ -319,7 +319,11 @@ def main():
             ):
                 return
 
-            started_at = existing.get("startedAt", time.time())
+            now = time.time()
+            existing_turn_id = str(existing.get("turnID") or "")
+            started_at = existing.get("startedAt", now)
+            if turn_id and turn_id != existing_turn_id:
+                started_at = now
             data = {
                 "id": "%s-%s" % (tool, session_id),
                 "tool": tool,
@@ -327,7 +331,7 @@ def main():
                 "label": label,
                 "cwd": payload.get("cwd") or os.getcwd(),
                 "startedAt": started_at,
-                "updatedAt": time.time(),
+                "updatedAt": now,
                 "turnID": turn_id,
             }
 
