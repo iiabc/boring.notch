@@ -70,7 +70,7 @@ enum PomoPreset: String, CaseIterable, Identifiable, Hashable {
         longBreak: TimeInterval,
         interval: Int
     ) -> PomoPreset {
-        first {
+        allCases.first {
             guard let configuration = $0.configuration else { return false }
             return configuration.work == work
                 && configuration.shortBreak == shortBreak
