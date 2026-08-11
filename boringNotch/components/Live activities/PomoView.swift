@@ -5,6 +5,12 @@ struct PomoLiveActivity: View {
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject private var manager = PomoManager.shared
     let height: CGFloat
+    let showCompletionNotice: Bool
+
+    init(height: CGFloat, showCompletionNotice: Bool = true) {
+        self.height = height
+        self.showCompletionNotice = showCompletionNotice
+    }
 
     private var phaseColor: Color {
         color(for: manager.phase)
@@ -21,7 +27,7 @@ struct PomoLiveActivity: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             Group {
-                if let notice = manager.completionNotice {
+                if showCompletionNotice, let notice = manager.completionNotice {
                     dropdownContent(for: notice)
                         .transition(.opacity)
                 } else {
@@ -29,7 +35,7 @@ struct PomoLiveActivity: View {
                         .transition(.opacity)
                 }
             }
-            .animation(.smooth(duration: 0.25), value: manager.completionNotice != nil)
+            .animation(.smooth(duration: 0.25), value: showCompletionNotice && manager.completionNotice != nil)
         }
     }
 

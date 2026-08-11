@@ -209,7 +209,10 @@ struct GeneralSettings: View {
                         Spacer()
                         Text(
                             Defaults[.gestureSensitivity] == 100
-                                ? "High" : Defaults[.gestureSensitivity] == 200 ? "Medium" : "Low"
+                                ? String(localized: "High")
+                                : Defaults[.gestureSensitivity] == 200
+                                    ? String(localized: "Medium")
+                                    : String(localized: "Low")
                         )
                         .foregroundStyle(.secondary)
                     }

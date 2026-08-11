@@ -73,7 +73,7 @@ struct PomodoroSettings: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button(manager.status == .running ? "Pause" : "Start") {
+                    Button(manager.status == .running ? String(localized: "Pause") : String(localized: "Start")) {
                         manager.toggle()
                     }
                     .buttonStyle(.borderedProminent)

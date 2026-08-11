@@ -37,7 +37,7 @@ public struct DraggableProgressBar: View {
             .contentShape(Rectangle())
             .gesture(dragGesture(in: geo))
             .accessibilityElement()
-            .accessibilityLabel(Text(NSLocalizedString("OSD.ValueLabel", comment: "Label for OSD value slider")))
+            .accessibilityLabel(Text(NSLocalizedString("OSD.ValueLabel", value: "Value", comment: "Label for OSD value slider")))
             .accessibilityValue(Text("\(Int(value * 100))%"))
             .accessibilityAdjustableAction { direction in
                 let step: CGFloat = 0.05

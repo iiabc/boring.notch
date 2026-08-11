@@ -65,9 +65,27 @@ struct NotchActivity: Identifiable {
 
 @MainActor
 final class NotchActivityCenter: ObservableObject {
+    static let pomodoroActivityID = "pomodoro"
+
     @Published private(set) var activities: [NotchActivity] = []
 
     private var nextOrder = 0
+    private var policyCancellables: Set<AnyCancellable> = []
+
+    init() {
+        Defaults.publisher(.notchActivityQuietMode)
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &policyCancellables)
+        Defaults.publisher(.notchActivitySuppressDuringFullscreen)
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &policyCancellables)
+        Defaults.publisher(.notchActivityQuietModeMinimumPriority)
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &policyCancellables)
+        FullscreenMediaDetector.shared.$fullscreenStatus
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &policyCancellables)
+    }
 
     func present(
         id: String,
@@ -75,7 +93,21 @@ final class NotchActivityCenter: ObservableObject {
         priority: Int,
         screenUUID: String? = nil
     ) {
-        activities.removeAll { $0.id == id }
+        if !Defaults[.notchActivityQueueEnabled] {
+            let overlappingActivities = activities.filter {
+                $0.id != id && scopesOverlap($0.screenUUID, screenUUID)
+            }
+            if let blocker = overlappingActivities.max(by: { $0.priority < $1.priority }),
+               blocker.priority > priority {
+                return
+            }
+            activities.removeAll {
+                $0.id == id || (scopesOverlap($0.screenUUID, screenUUID) && $0.priority <= priority)
+            }
+        } else {
+            activities.removeAll { $0.id == id }
+        }
+
         nextOrder += 1
         activities.append(
             NotchActivity(
@@ -97,6 +129,7 @@ final class NotchActivityCenter: ObservableObject {
             .filter { activity in
                 (activity.screenUUID == nil || activity.screenUUID == screenUUID)
                     && (kind == nil || activity.kind == kind)
+                    && isAllowed(activity, on: screenUUID)
             }
             .max { left, right in
                 if left.priority != right.priority {
@@ -104,6 +137,33 @@ final class NotchActivityCenter: ObservableObject {
                 }
                 return left.order < right.order
             }
+    }
+
+    func allows(priority: Int, on screenUUID: String?) -> Bool {
+        isAllowed(priority: priority, on: screenUUID)
+    }
+
+    private func scopesOverlap(_ left: String?, _ right: String?) -> Bool {
+        left == nil || right == nil || left == right
+    }
+
+    private func isAllowed(_ activity: NotchActivity, on screenUUID: String?) -> Bool {
+        isAllowed(priority: activity.priority, on: screenUUID)
+    }
+
+    private func isAllowed(priority: Int, on screenUUID: String?) -> Bool {
+        if Defaults[.notchActivityQuietMode],
+           priority < Defaults[.notchActivityQuietModeMinimumPriority].rawValue {
+            return false
+        }
+
+        if Defaults[.notchActivitySuppressDuringFullscreen],
+           let screenUUID,
+           FullscreenMediaDetector.shared.fullscreenStatus[screenUUID] == true {
+            return false
+        }
+
+        return true
     }
 }
 
@@ -320,7 +380,7 @@ class BoringViewCoordinator: ObservableObject {
                     self.activityCenter.present(
                         id: self.sneakPeekActivityID(for: uuid),
                         kind: .osd,
-                        priority: 40,
+                        priority: Defaults[.notchActivityOSDPriority].rawValue,
                         screenUUID: uuid
                     )
                     self.scheduleSneakPeekHide(for: uuid, duration: duration)
@@ -403,7 +463,9 @@ class BoringViewCoordinator: ObservableObject {
     }
     
     var isAnySneakPeekShowing: Bool {
-        return sneakPeekStates.values.contains { $0.show }
+        sneakPeekStates.contains { uuid, state in
+            state.show && activityCenter.active(for: uuid)?.id == sneakPeekActivityID(for: uuid)
+        }
     }
     
     // Helper to get state safely for binding/reading
@@ -505,16 +567,27 @@ class BoringViewCoordinator: ObservableObject {
     private func expandingActivityPriority(for type: SneakContentType) -> Int {
         switch type {
         case .agentStatus:
-            return 100
+            return Defaults[.notchActivityAgentPriority].rawValue
         case .battery:
-            return 80
+            return Defaults[.notchActivityBatteryPriority].rawValue
         case .download:
-            return 60
+            return Defaults[.notchActivityDownloadPriority].rawValue
         case .music:
-            return 20
+            return Defaults[.notchActivityMusicPriority].rawValue
         default:
-            return 50
+            return Defaults[.notchActivityDownloadPriority].rawValue
         }
+    }
+
+    func shouldShowExpandingView(on screenUUID: String?) -> Bool {
+        guard let screenUUID, expandingView.show else { return false }
+        return activityCenter.active(for: screenUUID, kind: .expanding)?.id
+            == expandingActivityID(for: expandingView.type)
+    }
+
+    func shouldShowPomodoroCompletion(on screenUUID: String?) -> Bool {
+        activityCenter.active(for: screenUUID, kind: .pomodoro)?.id
+            == NotchActivityCenter.pomodoroActivityID
     }
 
     private func refreshExpandingView() {

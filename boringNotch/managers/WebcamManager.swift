@@ -60,11 +60,11 @@ class WebcamManager: NSObject, ObservableObject {
         var errorDescription: String? {
             switch self {
             case .deviceUnavailable:
-                return "No camera devices available"
+                return String(localized: "No camera devices available")
             case .accessDenied:
-                return "Camera access denied"
+                return String(localized: "Camera access denied")
             case .configurationFailed(let message):
-                return "Camera configuration failed: \(message)"
+                return String(format: String(localized: "Camera configuration failed: %@"), message)
             }
         }
     }

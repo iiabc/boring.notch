@@ -19,6 +19,7 @@ struct ContentView: View {
     @ObservedObject var webcamManager = WebcamManager.shared
 
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @ObservedObject private var activityCenter = BoringViewCoordinator.shared.activityCenter
     @ObservedObject var musicManager = MusicManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var agentManager = AgentStatusManager.shared
@@ -93,38 +94,54 @@ struct ContentView: View {
     // narrows back to the physical notch width and extends downward with the
     // phase-change payload for the notice's 3s duration.
     private var pomoNoticeDropHeight: CGFloat {
-        guard pomoManager.completionNotice != nil,
+        guard isPomoCompletionVisible,
               pomoEnabled, pomoShowInNotch,
               vm.notchState == .closed, !vm.hideOnClosed
         else { return 0 }
         return 64
     }
 
+    private var isExpandingActivityVisible: Bool {
+        coordinator.shouldShowExpandingView(on: vm.screenUUID)
+    }
+
+    private var isPomoCompletionVisible: Bool {
+        guard pomoManager.completionNotice != nil else { return false }
+        return coordinator.shouldShowPomodoroCompletion(on: vm.screenUUID)
+    }
+
+    private var isMusicActivityVisible: Bool {
+        activityCenter.allows(
+            priority: Defaults[.notchActivityMusicPriority].rawValue,
+            on: vm.screenUUID
+        )
+    }
+
     private var computedChinWidth: CGFloat {
         var chinWidth: CGFloat = vm.closedNotchSize.width
 
-        if coordinator.expandingView.type == .agentStatus && coordinator.expandingView.show
+        if coordinator.expandingView.type == .agentStatus && isExpandingActivityVisible
             && vm.notchState == .closed && Defaults[.agentStatusEnabled]
         {
             chinWidth = 640
-        } else if coordinator.expandingView.type == .battery && coordinator.expandingView.show
+        } else if coordinator.expandingView.type == .battery && isExpandingActivityVisible
             && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
         {
             chinWidth = 640
-        } else if (pomoManager.isActive || pomoManager.completionNotice != nil) && pomoEnabled && pomoShowInNotch
+        } else if (pomoManager.isActive || isPomoCompletionVisible) && pomoEnabled && pomoShowInNotch
             && vm.notchState == .closed && !vm.hideOnClosed
         {
-            if pomoManager.completionNotice != nil {
+            if isPomoCompletionVisible {
                 chinWidth += 12
             } else {
                 chinWidth += (2 * max(0, displayClosedNotchHeight - 12) + 20 + 2 * liveActivityEdgeMargin + 2)
             }
-        } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
+        } else if (!isExpandingActivityVisible || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
-            && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
+            && coordinator.musicLiveActivityEnabled && isMusicActivityVisible && !vm.hideOnClosed
         {
             chinWidth += (2 * max(0, displayClosedNotchHeight - 12) + 20 + 2 * liveActivityEdgeMargin + 2)
-        } else if !coordinator.expandingView.show && vm.notchState == .closed
+        } else if !isExpandingActivityVisible && vm.notchState == .closed
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
         {
@@ -180,7 +197,7 @@ struct ContentView: View {
                         return view
                             .animation(vm.notchState == .open ? StandardAnimations.open : StandardAnimations.close, value: vm.notchState)
                             .animation(.smooth, value: gestureProgress)
-                            .animation(.spring(duration: 0.5, bounce: 0.35), value: pomoManager.completionNotice != nil)
+                            .animation(.spring(duration: 0.5, bounce: 0.35), value: isPomoCompletionVisible)
                     }
                     .contentShape(Rectangle())
                     .onHover { hovering in
@@ -324,11 +341,11 @@ struct ContentView: View {
                     .padding(.top, 40)
                     Spacer()
                 } else {
-                    if coordinator.expandingView.type == .agentStatus && coordinator.expandingView.show
+                    if coordinator.expandingView.type == .agentStatus && isExpandingActivityVisible
                         && vm.notchState == .closed && Defaults[.agentStatusEnabled]
                     {
                         AgentExpandedActivity(height: displayClosedNotchHeight)
-                    } else if coordinator.expandingView.type == .battery && coordinator.expandingView.show
+                    } else if coordinator.expandingView.type == .battery && isExpandingActivityVisible
                         && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
                     {
                         HStack(spacing: 0) {
@@ -356,10 +373,13 @@ struct ContentView: View {
                             .frame(width: 76, alignment: .trailing)
                         }
                         .frame(height: displayClosedNotchHeight, alignment: .center)
-                    } else if (pomoManager.isActive || pomoManager.completionNotice != nil) && pomoEnabled && pomoShowInNotch
+                    } else if (pomoManager.isActive || isPomoCompletionVisible) && pomoEnabled && pomoShowInNotch
                         && vm.notchState == .closed && !vm.hideOnClosed
                     {
-                        PomoLiveActivity(height: displayClosedNotchHeight + pomoNoticeDropHeight)
+                        PomoLiveActivity(
+                            height: displayClosedNotchHeight + pomoNoticeDropHeight,
+                            showCompletionNotice: isPomoCompletionVisible
+                        )
                             .transition(.opacity)
                     } else if coordinator.shouldShowSneakPeek(on: vm.screenUUID) && Defaults[.inlineOSD] && (coordinator.sneakPeekState(for: vm.screenUUID).type != .music) && (coordinator.sneakPeekState(for: vm.screenUUID).type != .battery) && vm.notchState == .closed {
                           InlineOSD(
@@ -371,10 +391,10 @@ struct ContentView: View {
                               gestureProgress: $gestureProgress
                           )
                               .transition(.opacity)
-                      } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
+                      } else if (!isExpandingActivityVisible || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && isMusicActivityVisible && !vm.hideOnClosed {
                           MusicLiveActivity()
                               .frame(alignment: .center)
-                       } else if !coordinator.expandingView.show && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
+                       } else if !isExpandingActivityVisible && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
                           BoringFaceAnimation()
                        } else if vm.notchState == .open {
                            BoringHeader()
@@ -512,7 +532,7 @@ struct ContentView: View {
                 .fill(.black)
                 .overlay(
                     HStack(alignment: .top) {
-                        if coordinator.expandingView.show
+                        if isExpandingActivityVisible
                             && coordinator.expandingView.type == .music
                         {
                             MarqueeText(
@@ -523,7 +543,7 @@ struct ContentView: View {
                                 frameWidth: 100
                             )
                             .opacity(
-                                (coordinator.expandingView.show
+                                (isExpandingActivityVisible
                                     && Defaults[.sneakPeekStyles] == .inline)
                                     ? 1 : 0
                             )
@@ -538,7 +558,7 @@ struct ContentView: View {
                                         : Color.gray
                                 )
                                 .opacity(
-                                    (coordinator.expandingView.show
+                                    (isExpandingActivityVisible
                                         && coordinator.expandingView.type == .music
                                         && Defaults[.sneakPeekStyles] == .inline)
                                         ? 1 : 0
@@ -547,7 +567,7 @@ struct ContentView: View {
                     }
                 )
                 .frame(
-                    width: (coordinator.expandingView.show
+                    width: (isExpandingActivityVisible
                         && coordinator.expandingView.type == .music
                         && Defaults[.sneakPeekStyles] == .inline)
                         ? 380
@@ -779,11 +799,12 @@ struct ContentView: View {
                 return coordinator.sneakPeekState(for: vm.screenUUID).type == .music
             }
 
-            guard !coordinator.expandingView.show || coordinator.expandingView.type == .music else {
+            guard !isExpandingActivityVisible || coordinator.expandingView.type == .music else {
                 return false
             }
 
-            return coordinator.musicLiveActivityEnabled && (musicManager.isPlaying || !musicManager.isPlayerIdle)
+            return coordinator.musicLiveActivityEnabled && isMusicActivityVisible
+                && (musicManager.isPlaying || !musicManager.isPlayerIdle)
 
         case .open:
             return coordinator.currentView == .home && !musicManager.isPlayerIdle && isHoveringMusicArea

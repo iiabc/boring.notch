@@ -138,12 +138,12 @@ final class PomoManager: ObservableObject {
         didSet {
             let activityCenter = BoringViewCoordinator.shared.activityCenter
             if completionNotice == nil {
-                activityCenter.dismiss(id: "pomodoro")
+                activityCenter.dismiss(id: NotchActivityCenter.pomodoroActivityID)
             } else {
                 activityCenter.present(
-                    id: "pomodoro",
+                    id: NotchActivityCenter.pomodoroActivityID,
                     kind: .pomodoro,
-                    priority: 70
+                    priority: Defaults[.notchActivityPomodoroPriority].rawValue
                 )
             }
         }

@@ -30,6 +30,24 @@ enum HideNotchOption: String, Defaults.Serializable {
     case never
 }
 
+enum NotchActivityPriority: Int, CaseIterable, Identifiable, Defaults.Serializable {
+    case critical = 100
+    case high = 80
+    case normal = 50
+    case low = 20
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .critical: return String(localized: "Critical")
+        case .high: return String(localized: "High")
+        case .normal: return String(localized: "Normal")
+        case .low: return String(localized: "Low")
+        }
+    }
+}
+
 struct AppLanguage: RawRepresentable, Hashable, Identifiable, Defaults.Serializable {
     static let system = AppLanguage(rawValue: "system")
 
@@ -138,11 +156,11 @@ enum MediaControllerType: String, CaseIterable, Identifiable, Defaults.Serializa
         case .nowPlaying:
             return NSLocalizedString("Now Playing", comment: "")
         case .appleMusic:
-            return "Apple Music"
+            return String(localized: "Apple Music")
         case .spotify:
-            return "Spotify"
+            return String(localized: "Spotify")
         case .youtubeMusic:
-            return "YouTube Music"
+            return String(localized: "YouTube Music")
         }
     }
 }
@@ -232,6 +250,39 @@ extension Defaults.Keys {
     //static let openLastTabByDefault = Key<Bool>("openLastTabByDefault", default: false)
     static let showOnLockScreen = Key<Bool>("showOnLockScreen", default: false)
     static let hideFromScreenRecording = Key<Bool>("hideFromScreenRecording", default: false)
+
+    // MARK: Notch Activity Center
+    static let notchActivityQuietMode = Key<Bool>("notchActivityQuietMode", default: false)
+    static let notchActivitySuppressDuringFullscreen = Key<Bool>("notchActivitySuppressDuringFullscreen", default: true)
+    static let notchActivityQueueEnabled = Key<Bool>("notchActivityQueueEnabled", default: true)
+    static let notchActivityQuietModeMinimumPriority = Key<NotchActivityPriority>(
+        "notchActivityQuietModeMinimumPriority",
+        default: .high
+    )
+    static let notchActivityAgentPriority = Key<NotchActivityPriority>(
+        "notchActivityAgentPriority",
+        default: .critical
+    )
+    static let notchActivityBatteryPriority = Key<NotchActivityPriority>(
+        "notchActivityBatteryPriority",
+        default: .high
+    )
+    static let notchActivityPomodoroPriority = Key<NotchActivityPriority>(
+        "notchActivityPomodoroPriority",
+        default: .high
+    )
+    static let notchActivityDownloadPriority = Key<NotchActivityPriority>(
+        "notchActivityDownloadPriority",
+        default: .normal
+    )
+    static let notchActivityOSDPriority = Key<NotchActivityPriority>(
+        "notchActivityOSDPriority",
+        default: .normal
+    )
+    static let notchActivityMusicPriority = Key<NotchActivityPriority>(
+        "notchActivityMusicPriority",
+        default: .low
+    )
     
     // MARK: Appearance
     //static let alwaysShowTabs = Key<Bool>("alwaysShowTabs", default: true)

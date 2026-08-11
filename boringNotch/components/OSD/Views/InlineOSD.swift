@@ -36,7 +36,7 @@ struct InlineOSD: View {
             
             HStack {
                 if (type == .mic) {
-                    Text(value.isZero ? "muted" : "unmuted")
+                    Text(String(format: String(localized: "Mic %@"), value.isZero ? String(localized: "muted") : String(localized: "unmuted")))
                         .foregroundStyle(.gray)
                         .lineLimit(1)
                         .allowsTightening(true)
@@ -54,7 +54,7 @@ struct InlineOSD: View {
                         }, accentColor: accent, compact: true)
                         .frame(maxWidth: .infinity)
                         if (type == .volume && value.isZero) {
-                            Text("muted")
+                            Text(String(localized: "muted"))
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.gray)

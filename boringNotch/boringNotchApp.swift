@@ -16,6 +16,7 @@ import SwiftUI
 struct DynamicNotchApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Default(.menubarIcon) var showMenuBarIcon
+    @Default(.notchActivityQuietMode) private var activityQuietMode
     @Environment(\.openWindow) var openWindow
 
     private let sparkleUpdaterDelegate: BoringSparkleUpdaterDelegate
@@ -40,6 +41,8 @@ struct DynamicNotchApp: App {
                 }
             }
             .keyboardShortcut(KeyEquivalent(","), modifiers: .command)
+            Toggle("Quiet mode", isOn: $activityQuietMode)
+            Divider()
             CheckForUpdatesView(updater: updaterController.updater)
             Divider()
             Button("Restart Boring Notch") {
@@ -628,7 +631,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 defer: false
             )
             window.center()
-            window.title = "Onboarding"
+            window.title = String(localized: "Onboarding")
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.level = .floating

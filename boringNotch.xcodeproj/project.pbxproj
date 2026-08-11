@@ -166,6 +166,7 @@
 		C0DE00000000000000000002 /* PomoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000001 /* PomoManager.swift */; };
 		C0DE00000000000000000004 /* PomoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000003 /* PomoView.swift */; };
 		C0DE00000000000000000006 /* PomodoroSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000005 /* PomodoroSettingsView.swift */; };
+		C0DE00000000000000000008 /* ActivityCenterSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000007 /* ActivityCenterSettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -355,6 +356,7 @@
 		C0DE00000000000000000001 /* PomoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomoManager.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000003 /* PomoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomoView.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000005 /* PomodoroSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroSettingsView.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000007 /* ActivityCenterSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityCenterSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -541,6 +543,7 @@
 		11DB26722EDD0CDF001EA0CF /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				C0DE00000000000000000007 /* ActivityCenterSettingsView.swift */,
 				C0DE00000000000000000005 /* PomodoroSettingsView.swift */,
 				11DB26672EDD0CDF001EA0CF /* AboutView.swift */,
 				11DB26682EDD0CDF001EA0CF /* AdvancedSettingsView.swift */,
@@ -1071,6 +1074,7 @@
 				C0DE00000000000000000002 /* PomoManager.swift in Sources */,
 				C0DE00000000000000000004 /* PomoView.swift in Sources */,
 				C0DE00000000000000000006 /* PomodoroSettingsView.swift in Sources */,
+				C0DE00000000000000000008 /* ActivityCenterSettingsView.swift in Sources */,
 				B1B112932C6A577E00093D8F /* MouseTracker.swift in Sources */,
 				B1C448962C9712C4001F0858 /* ActionBar.swift in Sources */,
 				118EBE312E9717DB00D54B5A /* URL+SecurityScoped.swift in Sources */,
