@@ -258,7 +258,9 @@ final class PomoManager: ObservableObject {
         let previousCompletionRevision = completionRevision
         if status == .running { updateClock() }
         guard completionRevision == previousCompletionRevision else { return }
+        let skippedPhase = phase
         advancePhase(startImmediately: true, didCompleteCurrentPhase: false)
+        showCompletionNotice(for: skippedPhase, playSound: false)
     }
 
     func addMinute() {
@@ -526,8 +528,8 @@ final class PomoManager: ObservableObject {
         Int(focusRecords(in: interval).reduce(0) { $0 + $1.duration } / 60)
     }
 
-    private func showCompletionNotice(for finishedPhase: PomoPhase) {
-        if Defaults[.pomoSound] { NSSound.beep() }
+    private func showCompletionNotice(for finishedPhase: PomoPhase, playSound: Bool = true) {
+        if playSound && Defaults[.pomoSound] { NSSound.beep() }
         guard Defaults[.pomoNotchNotifications] else { return }
 
         completionNoticeTask?.cancel()
