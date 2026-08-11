@@ -89,6 +89,17 @@ struct ContentView: View {
         )
     }
 
+    // Face ID-style dropdown: when a Pomodoro phase completes, the closed notch
+    // narrows back to the physical notch width and extends downward with the
+    // phase-change payload for the notice's 3s duration.
+    private var pomoNoticeDropHeight: CGFloat {
+        guard pomoManager.completionNotice != nil,
+              pomoEnabled, pomoShowInNotch,
+              vm.notchState == .closed, !vm.hideOnClosed
+        else { return 0 }
+        return 64
+    }
+
     private var computedChinWidth: CGFloat {
         var chinWidth: CGFloat = vm.closedNotchSize.width
 
@@ -103,7 +114,11 @@ struct ContentView: View {
         } else if (pomoManager.isActive || pomoManager.completionNotice != nil) && pomoEnabled && pomoShowInNotch
             && vm.notchState == .closed && !vm.hideOnClosed
         {
-            chinWidth += (2 * max(0, displayClosedNotchHeight - 12) + 20 + 2 * liveActivityEdgeMargin + 2)
+            if pomoManager.completionNotice != nil {
+                chinWidth += 12
+            } else {
+                chinWidth += (2 * max(0, displayClosedNotchHeight - 12) + 20 + 2 * liveActivityEdgeMargin + 2)
+            }
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -165,6 +180,7 @@ struct ContentView: View {
                         return view
                             .animation(vm.notchState == .open ? StandardAnimations.open : StandardAnimations.close, value: vm.notchState)
                             .animation(.smooth, value: gestureProgress)
+                            .animation(.spring(duration: 0.5, bounce: 0.35), value: pomoManager.completionNotice != nil)
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -227,6 +243,7 @@ struct ContentView: View {
                         }
                     }
                     .sensoryFeedback(.alignment, trigger: haptics)
+                    .sensoryFeedback(.success, trigger: pomoManager.completionRevision)
                     .contextMenu {
                         Button("Settings") {
                             DispatchQueue.main.async {
@@ -339,7 +356,7 @@ struct ContentView: View {
                     } else if (pomoManager.isActive || pomoManager.completionNotice != nil) && pomoEnabled && pomoShowInNotch
                         && vm.notchState == .closed && !vm.hideOnClosed
                     {
-                        PomoLiveActivity(height: displayClosedNotchHeight)
+                        PomoLiveActivity(height: displayClosedNotchHeight + pomoNoticeDropHeight)
                             .transition(.opacity)
                     } else if coordinator.shouldShowSneakPeek(on: vm.screenUUID) && Defaults[.inlineOSD] && (coordinator.sneakPeekState(for: vm.screenUUID).type != .music) && (coordinator.sneakPeekState(for: vm.screenUUID).type != .battery) && vm.notchState == .closed {
                           InlineOSD(

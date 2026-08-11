@@ -20,56 +20,75 @@ struct PomoLiveActivity: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            HStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    if let notice = manager.completionNotice {
-                        Image(systemName: notice.phase.symbolName)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(color(for: notice.phase))
-                        Text(notice.title)
-                            .font(.caption)
-                            .foregroundStyle(.white)
-                    } else {
-                        Image(systemName: manager.phase.symbolName)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(phaseColor)
-                        Text(manager.phase.compactTitle)
-                            .font(.caption)
-                            .foregroundStyle(.white)
-                    }
+            Group {
+                if let notice = manager.completionNotice {
+                    dropdownContent(for: notice)
+                        .transition(.opacity)
+                } else {
+                    liveRow(at: context.date)
+                        .transition(.opacity)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 12)
+            }
+            .animation(.smooth(duration: 0.25), value: manager.completionNotice != nil)
+        }
+    }
 
-                Rectangle()
-                    .fill(.black)
+    private func dropdownContent(for notice: PomoCompletionNotice) -> some View {
+        VStack(spacing: 3) {
+            Spacer(minLength: 0)
+            Image(systemName: notice.phase.symbolName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(color(for: notice.phase))
+            Text(notice.title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+            Text(notice.message)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 10)
+        }
+        .frame(width: vm.closedNotchSize.width + 12, height: height, alignment: .bottom)
+    }
+
+    private func liveRow(at date: Date) -> some View {
+        HStack(spacing: 0) {
+            HStack(spacing: 6) {
+                Image(systemName: manager.phase.symbolName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(phaseColor)
+                Text(manager.phase.compactTitle)
+                    .font(.caption)
+                    .foregroundStyle(.white)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 12)
+
+            Rectangle()
+                .fill(.black)
                 .frame(width: vm.closedNotchSize.width + 10)
 
-                HStack(spacing: 7) {
-                    Group {
-                        if let notice = manager.completionNotice {
-                            Text(notice.message)
-                                .font(.caption)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        } else {
-                            Text(manager.formattedRemaining(at: context.date))
-                                .font(.system(.subheadline, design: .monospaced))
-                        }
-                    }
+            HStack(spacing: 7) {
+                Text(manager.formattedRemaining(at: date))
+                    .font(.system(.subheadline, design: .monospaced))
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
-                    if manager.completionNotice == nil && manager.status == .paused {
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
+                if manager.status == .paused {
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 12)
             }
-            .frame(height: height, alignment: .center)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background {
+                if manager.phase != .work {
+                    Capsule().fill(phaseColor.opacity(0.25))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, 12)
         }
+        .frame(height: height, alignment: .center)
     }
 }
 
