@@ -183,6 +183,9 @@ struct ContentView: View {
                             .animation(.spring(duration: 0.5, bounce: 0.35), value: pomoManager.completionNotice != nil)
                     }
                     .contentShape(Rectangle())
+                    .onHover { hovering in
+                        handleHover(hovering)
+                    }
                     .onTapGesture {
                         doOpen()
                     }
@@ -454,9 +457,6 @@ struct ContentView: View {
                 .allowsHitTesting(vm.notchState == .open)
                 .opacity(gestureProgress != 0 ? 1.0 - min(abs(gestureProgress) * 0.1, 0.3) : 1.0)
             }
-        }
-        .onHover { hovering in
-            handleHover(hovering)
         }
         .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $vm.generalDropTargeting))
     }
