@@ -47,11 +47,16 @@ final class IslandWindowManager {
 
     func present(islands: [FloatingIsland], for viewModel: BoringViewModel) {
         let key = contextKey(for: viewModel)
-        if let existing = contexts[key], existing.window != nil, !existing.isDismissing {
-            return
+        if let existing = contexts[key] {
+            if !existing.isDismissing, existing.window != nil {
+                return
+            }
+            if let staleWindow = existing.window {
+                NotchSpaceManager.shared.notchSpace.windows.remove(staleWindow)
+                staleWindow.close()
+            }
+            contexts.removeValue(forKey: key)
         }
-
-        dismiss(for: key, animated: false)
 
         guard !islands.isEmpty,
               let screen = viewModel.screenUUID.flatMap({ NSScreen.screen(withUUID: $0) }) ?? NSScreen.main else {
@@ -109,7 +114,7 @@ final class IslandWindowManager {
     }
 
     private func dismiss(for key: String, animated: Bool) {
-        guard let context = contexts.removeValue(forKey: key), let window = context.window else { return }
+        guard let context = contexts[key], let window = context.window, !context.isDismissing else { return }
         context.isDismissing = true
         if context.hoverCount > 0 {
             context.hoverCount = 0
@@ -128,12 +133,16 @@ final class IslandWindowManager {
             }
             let settle = 0.45 / Defaults[.animationSpeedMultiplier]
                 + Double(context.islandCount) * stagger + 0.1
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .milliseconds(Int(settle * 1000)))
                 window.close()
+                if let self, self.contexts[key] === context {
+                    self.contexts.removeValue(forKey: key)
+                }
             }
         } else {
             window.close()
+            contexts.removeValue(forKey: key)
         }
     }
 

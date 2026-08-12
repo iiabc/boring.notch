@@ -22,6 +22,8 @@ struct SystemMonitorView: View {
             .onChange(of: vm.notchState) {
                 if vm.notchState == .closed {
                     IslandWindowManager.shared.dismiss(for: vm)
+                } else {
+                    presentIslands()
                 }
             }
             .onChange(of: monitor.externalVolumes.count) { _, _ in
