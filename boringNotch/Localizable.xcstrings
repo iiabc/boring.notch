@@ -6245,7 +6245,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关闭的刘海"
+            "value" : "关闭的灵动岛"
           }
         },
         "zh-Hant-HK" : {
@@ -14520,7 +14520,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "与刘海高度一致"
+            "value" : "与灵动岛高度一致"
           }
         },
         "zh-Hant-HK" : {
@@ -17235,7 +17235,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "刘海动画"
+            "value" : "灵动岛动画"
           }
         },
         "zh-Hant-HK" : {
@@ -17453,7 +17453,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "普通屏上的刘海高度"
+            "value" : "普通屏上的灵动岛高度"
           }
         },
         "zh-Hant-HK" : {
@@ -17559,7 +17559,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "刘海屏上的刘海高度"
+            "value" : "灵动岛屏上的灵动岛高度"
           }
         },
         "zh-Hant-HK" : {
@@ -17665,7 +17665,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "刘海尺寸"
+            "value" : "灵动岛尺寸"
           }
         },
         "zh-Hant-HK" : {
@@ -17965,7 +17965,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "打开刘海"
+            "value" : "打开灵动岛"
           }
         },
         "zh-Hant-HK" : {
@@ -21555,7 +21555,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隐藏刘海模式下圆角自适应缩放"
+            "value" : "隐藏灵动岛模式下圆角自适应缩放"
           }
         },
         "zh-Hant-HK" : {
@@ -23182,7 +23182,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在闭合刘海显示计时器"
+            "value" : "在闭合灵动岛显示计时器"
           }
         }
       }
@@ -23214,7 +23214,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在刘海中显示 Agent 状态"
+            "value" : "在灵动岛中显示 Agent 状态"
           }
         }
       }
@@ -23582,7 +23582,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在刘海显示完成提示"
+            "value" : "在灵动岛显示完成提示"
           }
         }
       }
@@ -24094,7 +24094,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "锁屏时显示刘海"
+            "value" : "锁屏时显示灵动岛"
           }
         },
         "zh-Hant-HK" : {
@@ -24258,7 +24258,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在打开的刘海中显示 OSD"
+            "value" : "在打开的灵动岛中显示 OSD"
           }
         },
         "zh-Hant-HK" : {
@@ -24411,7 +24411,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "显示百分比 (刘海关闭状态下)"
+            "value" : "显示百分比 (灵动岛关闭状态下)"
           }
         },
         "zh-Hant-HK" : {
@@ -24463,7 +24463,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "显示百分比 (刘海打开状态下)"
+            "value" : "显示百分比 (灵动岛打开状态下)"
           }
         },
         "zh-Hant-HK" : {
@@ -24787,7 +24787,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在刘海中显示设置图标"
+            "value" : "在灵动岛中显示设置图标"
           }
         },
         "zh-Hant-HK" : {
@@ -27580,7 +27580,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在刘海两边显示"
+            "value" : "在灵动岛两边显示"
           }
         },
         "zh-Hant-HK" : {
