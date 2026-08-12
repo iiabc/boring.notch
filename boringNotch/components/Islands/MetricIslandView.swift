@@ -51,7 +51,6 @@ struct MetricIslandView: View {
             if showsBackground {
                 RoundedRectangle(cornerRadius: cornerRadiusInsets.opened.bottom, style: .continuous)
                     .fill(.black)
-                    .shadow(color: .black.opacity(0.7), radius: 6)
             }
         }
     }
