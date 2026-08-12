@@ -1,5 +1,37 @@
 import SwiftUI
 
+enum SystemMonitorIslandKind: String, CaseIterable, Identifiable {
+    case memory
+    case cpu
+    case storage
+
+    var id: Self { self }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .memory: "Memory"
+        case .cpu: "CPU"
+        case .storage: "Storage"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .memory: "memorychip"
+        case .cpu: "cpu"
+        case .storage: "internaldrive"
+        }
+    }
+
+    static func ordered(order: [String]) -> [SystemMonitorIslandKind] {
+        var result = order.compactMap { SystemMonitorIslandKind(rawValue: $0) }
+        for kind in allCases where !result.contains(kind) {
+            result.append(kind)
+        }
+        return result
+    }
+}
+
 struct MetricIslandDetail: Identifiable {
     let id = UUID()
     let title: LocalizedStringKey
@@ -85,6 +117,7 @@ struct MetricIslandView: View {
 
 struct MemoryMetricIslandView: View {
     @ObservedObject var monitor = SystemMonitorManager.shared
+    var showsBackground = true
 
     private var usage: Double {
         guard monitor.totalMemoryBytes > 0 else { return 0 }
@@ -102,13 +135,14 @@ struct MemoryMetricIslandView: View {
                 MetricIslandDetail(title: "Used", value: MetricIslandView.formatBytes(monitor.usedMemoryBytes)),
                 MetricIslandDetail(title: "Total", value: MetricIslandView.formatBytes(monitor.totalMemoryBytes))
             ],
-            showsBackground: false
+            showsBackground: showsBackground
         )
     }
 }
 
 struct CPUMetricIslandView: View {
     @ObservedObject var monitor = SystemMonitorManager.shared
+    var showsBackground = true
 
     var body: some View {
         MetricIslandView(
@@ -120,13 +154,14 @@ struct CPUMetricIslandView: View {
             details: [
                 MetricIslandDetail(title: "Cores", value: "\(monitor.cpuCoreCount)"),
                 MetricIslandDetail(title: "Updated", value: "1s")
-            ]
+            ],
+            showsBackground: showsBackground
         )
     }
 }
 
 extension MetricIslandView {
-    static func storage(volume: SystemVolumeStatus) -> MetricIslandView {
+    static func storage(volume: SystemVolumeStatus, showsBackground: Bool = true) -> MetricIslandView {
         MetricIslandView(
             title: volume.name,
             systemImage: volume.mountPoint == "/" ? "internaldrive" : "externaldrive",
@@ -136,7 +171,8 @@ extension MetricIslandView {
             details: [
                 MetricIslandDetail(title: "Used", value: Self.formatBytes(volume.usedBytes)),
                 MetricIslandDetail(title: "Free", value: Self.formatBytes(volume.availableBytes))
-            ]
+            ],
+            showsBackground: showsBackground
         )
     }
 

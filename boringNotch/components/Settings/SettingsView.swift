@@ -13,6 +13,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case activityCenter
     case appearance
+    case systemMonitor
     case media
     case pomodoro
     case agents
@@ -32,6 +33,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "General"
         case .activityCenter: "Activity Center"
         case .appearance: "Appearance"
+        case .systemMonitor: "System Monitor"
         case .media: "Media"
         case .pomodoro: "Pomodoro"
         case .agents: "Agents"
@@ -51,6 +53,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: "gear"
         case .activityCenter: "bell.badge"
         case .appearance: "eye"
+        case .systemMonitor: "chart.bar.fill"
         case .media: "play.laptopcomputer"
         case .pomodoro: "timer"
         case .agents: "terminal"
@@ -97,6 +100,8 @@ struct SettingsView: View {
                     ActivityCenterSettings()
                 case .appearance:
                     Appearance()
+                case .systemMonitor:
+                    SystemMonitorSettings()
                 case .media:
                     Media()
                 case .pomodoro:

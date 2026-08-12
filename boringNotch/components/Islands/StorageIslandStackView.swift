@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StorageIslandStackView: View {
     @ObservedObject var monitor: SystemMonitorManager
+    var showsBackground = true
     @AppStorage("storageIslandTopVolumeID") private var topVolumeID: String = "/"
     @State private var order: [String] = ["/"]
 
@@ -38,7 +39,7 @@ struct StorageIslandStackView: View {
     }
 
     private func cardView(volume: SystemVolumeStatus, index: Int) -> some View {
-        MetricIslandView.storage(volume: volume)
+        MetricIslandView.storage(volume: volume, showsBackground: showsBackground)
             .frame(height: 108)
             .scaleEffect(index == 0 ? 1 : max(0.9, 1 - 0.035 * CGFloat(index)), anchor: .top)
             .offset(y: index == 0 ? 0 : 10 * CGFloat(min(index, 2)))

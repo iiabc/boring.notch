@@ -346,6 +346,10 @@ extension Defaults.Keys {
 
     // MARK: System monitor
     static let systemMonitorEnabled = Key<Bool>("systemMonitorEnabled", default: true)
+    static let systemMonitorMemoryVisible = Key<Bool>("systemMonitorMemoryVisible", default: true)
+    static let systemMonitorCpuVisible = Key<Bool>("systemMonitorCpuVisible", default: true)
+    static let systemMonitorStorageVisible = Key<Bool>("systemMonitorStorageVisible", default: true)
+    static let systemMonitorIslandOrder = Key<[String]>("systemMonitorIslandOrder", default: ["memory", "cpu", "storage"])
 
     // MARK: Pomodoro
     static let pomoEnabled = Key<Bool>("pomoEnabled", default: true)

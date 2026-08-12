@@ -81,6 +81,7 @@
 		11DB26742EDD0CDF001EA0CF /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB266C2EDD0CDF001EA0CF /* GeneralSettingsView.swift */; };
 		11DB26752EDD0CDF001EA0CF /* ShelfSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB26702EDD0CDF001EA0CF /* ShelfSettingsView.swift */; };
 		11DB26762EDD0CDF001EA0CF /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB26692EDD0CDF001EA0CF /* AppearanceSettingsView.swift */; };
+		D30000000000000000000001 /* SystemMonitorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000002 /* SystemMonitorSettingsView.swift */; };
 		11DB26772EDD0CDF001EA0CF /* SettingsHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB266F2EDD0CDF001EA0CF /* SettingsHelpers.swift */; };
 		11DB26782EDD0CDF001EA0CF /* BatterySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB266A2EDD0CDF001EA0CF /* BatterySettingsView.swift */; };
 		11DB26792EDD0CDF001EA0CF /* AdvancedSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB26682EDD0CDF001EA0CF /* AdvancedSettingsView.swift */; };
@@ -277,6 +278,7 @@
 		11DB26672EDD0CDF001EA0CF /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		11DB26682EDD0CDF001EA0CF /* AdvancedSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsView.swift; sourceTree = "<group>"; };
 		11DB26692EDD0CDF001EA0CF /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
+		D30000000000000000000002 /* SystemMonitorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitorSettingsView.swift; sourceTree = "<group>"; };
 		11DB266A2EDD0CDF001EA0CF /* BatterySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatterySettingsView.swift; sourceTree = "<group>"; };
 		11DB266B2EDD0CDF001EA0CF /* CalendarSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSettingsView.swift; sourceTree = "<group>"; };
 		11DB266C2EDD0CDF001EA0CF /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
@@ -558,6 +560,7 @@
 				11DB26672EDD0CDF001EA0CF /* AboutView.swift */,
 				11DB26682EDD0CDF001EA0CF /* AdvancedSettingsView.swift */,
 				11DB26692EDD0CDF001EA0CF /* AppearanceSettingsView.swift */,
+				D30000000000000000000002 /* SystemMonitorSettingsView.swift */,
 				11DB266A2EDD0CDF001EA0CF /* BatterySettingsView.swift */,
 				11DB266B2EDD0CDF001EA0CF /* CalendarSettingsView.swift */,
 				11DB266C2EDD0CDF001EA0CF /* GeneralSettingsView.swift */,
@@ -1122,6 +1125,7 @@
 				11DB26742EDD0CDF001EA0CF /* GeneralSettingsView.swift in Sources */,
 				11DB26752EDD0CDF001EA0CF /* ShelfSettingsView.swift in Sources */,
 				11DB26762EDD0CDF001EA0CF /* AppearanceSettingsView.swift in Sources */,
+				D30000000000000000000001 /* SystemMonitorSettingsView.swift in Sources */,
 				11DB26772EDD0CDF001EA0CF /* SettingsHelpers.swift in Sources */,
 				11DB26782EDD0CDF001EA0CF /* BatterySettingsView.swift in Sources */,
 				11DB26792EDD0CDF001EA0CF /* AdvancedSettingsView.swift in Sources */,
