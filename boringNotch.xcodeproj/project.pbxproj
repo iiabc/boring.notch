@@ -159,6 +159,9 @@
 		B1D365CE2C6A979C0047BDBC /* LiveActivityModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D365CD2C6A979C0047BDBC /* LiveActivityModifier.swift */; };
 		B1D365D02C6A9A6C0047BDBC /* SystemEventIndicatorModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D365CF2C6A9A6C0047BDBC /* SystemEventIndicatorModifier.swift */; };
 		D10000000000000000000001 /* SystemMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000002 /* SystemMonitorView.swift */; };
+		D20000000000000000000002 /* MetricIslandView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000003 /* MetricIslandView.swift */; };
+		D20000000000000000000004 /* StorageIslandStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000005 /* StorageIslandStackView.swift */; };
+		D20000000000000000000006 /* IslandWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000007 /* IslandWindowManager.swift */; };
 		D10000000000000000000003 /* SystemMonitorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000004 /* SystemMonitorManager.swift */; };
 		B1D6FD432C6603730015F173 /* SoftwareUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D6FD422C6603730015F173 /* SoftwareUpdater.swift */; };
 		B1F0A0022E60000100000001 /* BrightnessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0A0012E60000100000001 /* BrightnessManager.swift */; };
@@ -351,6 +354,9 @@
 		B1D365CD2C6A979C0047BDBC /* LiveActivityModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityModifier.swift; sourceTree = "<group>"; };
 		B1D365CF2C6A9A6C0047BDBC /* SystemEventIndicatorModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemEventIndicatorModifier.swift; sourceTree = "<group>"; };
 		D10000000000000000000002 /* SystemMonitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitorView.swift; sourceTree = "<group>"; };
+		D20000000000000000000003 /* MetricIslandView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricIslandView.swift; sourceTree = "<group>"; };
+		D20000000000000000000005 /* StorageIslandStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageIslandStackView.swift; sourceTree = "<group>"; };
+		D20000000000000000000007 /* IslandWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandWindowManager.swift; sourceTree = "<group>"; };
 		D10000000000000000000004 /* SystemMonitorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitorManager.swift; sourceTree = "<group>"; };
 		B1D6FD422C6603730015F173 /* SoftwareUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftwareUpdater.swift; sourceTree = "<group>"; };
 		B1F0A0012E60000100000001 /* BrightnessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrightnessManager.swift; sourceTree = "<group>"; };
@@ -620,6 +626,7 @@
 				B18654302C6F4590000B926A /* Settings */,
 				B186542F2C6F455E000B926A /* Notch */,
 				9A0887332C7AFF7E00C160EA /* Tabs */,
+				D20000000000000000000001 /* Islands */,
 				B186542E2C6F453B000B926A /* Music */,
 				14D570BF2C5EA5870011E668 /* AnimatedFace.swift */,
 				14288DE72C6E01C800B9F80C /* ProgressIndicator.swift */,
@@ -772,6 +779,16 @@
 				D10000000000000000000002 /* SystemMonitorView.swift */,
 			);
 			path = Tabs;
+			sourceTree = "<group>";
+		};
+		D20000000000000000000001 /* Islands */ = {
+			isa = PBXGroup;
+			children = (
+				D20000000000000000000003 /* MetricIslandView.swift */,
+				D20000000000000000000005 /* StorageIslandStackView.swift */,
+				D20000000000000000000007 /* IslandWindowManager.swift */,
+			);
+			path = Islands;
 			sourceTree = "<group>";
 		};
 		9A987A042C73CA66005CA465 /* Shelf */ = {
@@ -1148,6 +1165,9 @@
 				11F748842ECB27DC00F841DB /* MusicSlotConfigurationView.swift in Sources */,
 				9A0887352C7AFF8E00C160EA /* TabSelectionView.swift in Sources */,
 				D10000000000000000000001 /* SystemMonitorView.swift in Sources */,
+				D20000000000000000000002 /* MetricIslandView.swift in Sources */,
+				D20000000000000000000004 /* StorageIslandStackView.swift in Sources */,
+				D20000000000000000000006 /* IslandWindowManager.swift in Sources */,
 				112FB7352CCF16F70015238C /* NotchSpaceManager.swift in Sources */,
 				14FC6E502C7DED5600C7BEA5 /* DataTypes+Extensions.swift in Sources */,
 				1153BD982D9881F900979FB0 /* AppleScriptHelper.swift in Sources */,
