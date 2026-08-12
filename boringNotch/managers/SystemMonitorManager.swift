@@ -9,6 +9,7 @@ struct SystemVolumeStatus: Identifiable, Equatable {
     let mountPoint: String
     let totalBytes: UInt64
     let availableBytes: UInt64
+    let purgeableBytes: UInt64
 
     var usedBytes: UInt64 {
         totalBytes > availableBytes ? totalBytes - availableBytes : 0
@@ -36,7 +37,8 @@ final class SystemMonitorManager: ObservableObject {
         name: "Macintosh HD",
         mountPoint: "/",
         totalBytes: 0,
-        availableBytes: 0
+        availableBytes: 0,
+        purgeableBytes: 0
     )
     @Published private(set) var externalVolumes: [SystemVolumeStatus] = []
     @Published private(set) var networkDownloadRate: Double = 0
@@ -290,7 +292,8 @@ final class SystemMonitorManager: ObservableObject {
             name: "Macintosh HD",
             mountPoint: "/",
             totalBytes: 0,
-            availableBytes: 0
+            availableBytes: 0,
+            purgeableBytes: 0
         )
 
         let resourceKeys: Set<URLResourceKey> = [
@@ -340,6 +343,8 @@ final class SystemMonitorManager: ObservableObject {
 
         let availableCapacity = values.volumeAvailableCapacityForImportantUsage
             ?? Int64(values.volumeAvailableCapacity ?? 0)
+        let freeCapacity = Int64(values.volumeAvailableCapacity ?? 0)
+        let purgeableCapacity = max(0, availableCapacity - freeCapacity)
         let name = values.volumeName?.isEmpty == false
             ? values.volumeName!
             : url.lastPathComponent
@@ -349,7 +354,8 @@ final class SystemMonitorManager: ObservableObject {
             name: name,
             mountPoint: url.path,
             totalBytes: UInt64(totalCapacity),
-            availableBytes: UInt64(max(0, availableCapacity))
+            availableBytes: UInt64(max(0, availableCapacity)),
+            purgeableBytes: UInt64(max(0, purgeableCapacity))
         )
     }
 }

@@ -260,7 +260,8 @@ extension MetricIslandView {
             valueText: Self.percentage(volume.usage),
             details: [
                 MetricIslandDetail(title: "Used", value: Self.formatBytes(volume.usedBytes)),
-                MetricIslandDetail(title: "Total", value: Self.formatBytes(volume.totalBytes))
+                MetricIslandDetail(title: "Total", value: Self.formatBytes(volume.totalBytes)),
+                MetricIslandDetail(title: "Purgeable", value: Self.formatBytes(volume.purgeableBytes))
             ],
             showsBackground: showsBackground,
             trailing: AnyView(storageTrailing(volume: volume))
