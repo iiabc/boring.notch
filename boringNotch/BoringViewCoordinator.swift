@@ -158,6 +158,7 @@ final class NotchActivityCenter: ObservableObject {
         }
 
         if Defaults[.notchActivitySuppressDuringFullscreen],
+           priority < NotchActivityPriority.critical.rawValue,
            let screenUUID,
            FullscreenMediaDetector.shared.fullscreenStatus[screenUUID] == true {
             return false
