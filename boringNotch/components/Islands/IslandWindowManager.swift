@@ -1,4 +1,5 @@
 import AppKit
+import Defaults
 import SwiftUI
 
 struct FloatingIsland {
@@ -23,9 +24,19 @@ final class IslandWindowManager {
 
     private(set) var isHoveringIsland = false
 
+    final class IslandStackPresentation: ObservableObject {
+        @Published var presented: [Bool]
+
+        init(count: Int) {
+            presented = Array(repeating: false, count: count)
+        }
+    }
+
     private final class IslandContext {
-        var windows: [NSWindow] = []
+        var window: NSWindow?
+        var presentation: IslandStackPresentation?
         weak var viewModel: BoringViewModel?
+        var islandCount = 0
         var hoverCount = 0
         var isDismissing = false
     }
@@ -36,60 +47,61 @@ final class IslandWindowManager {
 
     func present(islands: [FloatingIsland], for viewModel: BoringViewModel) {
         let key = contextKey(for: viewModel)
-        if let existing = contexts[key], !existing.windows.isEmpty, !existing.isDismissing {
+        if let existing = contexts[key], existing.window != nil, !existing.isDismissing {
             return
         }
 
         dismiss(for: key, animated: false)
 
-        guard let screen = viewModel.screenUUID.flatMap({ NSScreen.screen(withUUID: $0) }) ?? NSScreen.main else {
+        guard !islands.isEmpty,
+              let screen = viewModel.screenUUID.flatMap({ NSScreen.screen(withUUID: $0) }) ?? NSScreen.main else {
             return
         }
 
-        let context = IslandContext()
-        context.viewModel = viewModel
-
         let screenFrame = screen.frame
-        var topY = screenFrame.maxY - windowSize.height - Self.islandGap
+        let notchBottomY = screenFrame.maxY - windowSize.height
+        let totalHeight = islands.reduce(0) { $0 + $1.height }
+            + Self.islandGap * CGFloat(islands.count - 1)
 
-        for (index, island) in islands.enumerated() {
-            let frame = NSRect(
-                x: screenFrame.midX - Self.islandWidth / 2,
-                y: topY - island.height,
-                width: Self.islandWidth,
-                height: island.height
-            )
+        let frame = NSRect(
+            x: screenFrame.midX - Self.islandWidth / 2,
+            y: notchBottomY - Self.islandGap - totalHeight,
+            width: Self.islandWidth,
+            height: totalHeight
+        )
 
-            let window = BoringNotchSkyLightWindow(
-                contentRect: frame,
-                styleMask: [.borderless, .nonactivatingPanel],
-                backing: .buffered,
-                defer: false
-            )
-            window.alphaValue = 0
+        let window = BoringNotchSkyLightWindow(
+            contentRect: frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
 
-            let wrapper = IslandAppearWrapper(index: index, onHover: { [weak self] hovering in
+        let presentation = IslandStackPresentation(count: islands.count)
+        let container = IslandStackContainerView(
+            islands: islands,
+            presentation: presentation,
+            onHover: { [weak self] hovering in
                 self?.setHovering(hovering, for: key)
-            }) {
-                island.content
-                    .padding(.horizontal, Self.contentInset)
             }
-            window.contentView = NSHostingView(rootView: wrapper.preferredColorScheme(.dark))
+        )
+        window.contentView = NSHostingView(rootView: container.preferredColorScheme(.dark))
 
-            window.orderFrontRegardless()
-            NotchSpaceManager.shared.notchSpace.windows.insert(window)
-            context.windows.append(window)
+        window.orderFrontRegardless()
+        NotchSpaceManager.shared.notchSpace.windows.insert(window)
 
-            NSAnimationContext.runAnimationGroup { group in
-                group.duration = 0.3
-                group.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                window.animator().alphaValue = 1
-            }
-
-            topY -= island.height + Self.islandGap
-        }
-
+        let context = IslandContext()
+        context.window = window
+        context.presentation = presentation
+        context.viewModel = viewModel
+        context.islandCount = islands.count
         contexts[key] = context
+
+        for index in islands.indices {
+            withAnimation(StandardAnimations.open.delay(Double(index) * 0.07)) {
+                presentation.presented[index] = true
+            }
+        }
     }
 
     func dismiss(for viewModel: BoringViewModel, animated: Bool = true) {
@@ -97,34 +109,31 @@ final class IslandWindowManager {
     }
 
     private func dismiss(for key: String, animated: Bool) {
-        guard let context = contexts.removeValue(forKey: key), !context.windows.isEmpty else { return }
+        guard let context = contexts.removeValue(forKey: key), let window = context.window else { return }
         context.isDismissing = true
         if context.hoverCount > 0 {
             context.hoverCount = 0
             updateHoveringFlag()
         }
 
-        let windows = context.windows
-        for window in windows {
-            NotchSpaceManager.shared.notchSpace.windows.remove(window)
-        }
+        NotchSpaceManager.shared.notchSpace.windows.remove(window)
 
-        if animated {
-            NSAnimationContext.runAnimationGroup({ group in
-                group.duration = 0.18
-                group.timingFunction = CAMediaTimingFunction(name: .easeIn)
-                for window in windows {
-                    window.animator().alphaValue = 0
+        if animated, let presentation = context.presentation {
+            let stagger: TimeInterval = 0.06
+            for index in presentation.presented.indices {
+                let delay = Double(presentation.presented.count - 1 - index) * stagger
+                withAnimation(StandardAnimations.close.delay(delay)) {
+                    presentation.presented[index] = false
                 }
-            }, completionHandler: {
-                for window in windows {
-                    window.close()
-                }
-            })
-        } else {
-            for window in windows {
+            }
+            let settle = 0.45 / Defaults[.animationSpeedMultiplier]
+                + Double(context.islandCount) * stagger + 0.1
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(Int(settle * 1000)))
                 window.close()
             }
+        } else {
+            window.close()
         }
     }
 
@@ -161,23 +170,43 @@ final class IslandWindowManager {
     }
 }
 
-private struct IslandAppearWrapper<Content: View>: View {
-    let index: Int
+private struct IslandStackContainerView: View {
+    let islands: [FloatingIsland]
+    @ObservedObject var presentation: IslandWindowManager.IslandStackPresentation
     let onHover: (Bool) -> Void
-    @ViewBuilder let content: Content
-    @State private var appeared = false
 
     var body: some View {
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : -14)
-            .scaleEffect(appeared ? 1 : 0.96, anchor: .top)
-            .onAppear {
-                withAnimation(.spring(duration: 0.5, bounce: 0.3).delay(Double(index) * 0.07)) {
-                    appeared = true
-                }
+        VStack(spacing: IslandWindowManager.islandGap) {
+            ForEach(Array(islands.enumerated()), id: \.element.id) { index, island in
+                IslandRevealView(
+                    island: island,
+                    isPresented: presentation.presented[index]
+                )
             }
-            .onHover { onHover($0) }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .contentShape(Rectangle())
+        .onHover { onHover($0) }
+    }
+}
+
+private struct IslandRevealView: View {
+    let island: FloatingIsland
+    let isPresented: Bool
+
+    private let collapsedWidth: CGFloat = 200
+    private var fullWidth: CGFloat {
+        IslandWindowManager.islandWidth - 2 * IslandWindowManager.contentInset
+    }
+
+    var body: some View {
+        island.content
+            .frame(width: fullWidth, height: island.height)
+            .frame(
+                width: isPresented ? fullWidth : collapsedWidth,
+                height: isPresented ? island.height : 0,
+                alignment: .top
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadiusInsets.opened.bottom, style: .continuous))
     }
 }

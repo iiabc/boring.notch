@@ -19,6 +19,11 @@ struct SystemMonitorView: View {
                 monitor.stopMonitoring()
                 IslandWindowManager.shared.dismiss(for: vm)
             }
+            .onChange(of: vm.notchState) {
+                if vm.notchState == .closed {
+                    IslandWindowManager.shared.dismiss(for: vm)
+                }
+            }
             .onChange(of: monitor.externalVolumes.count) { _, _ in
                 IslandWindowManager.shared.dismiss(for: vm, animated: false)
                 presentIslands()
