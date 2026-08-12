@@ -466,6 +466,8 @@ struct ContentView: View {
                         AgentListView()
                     case .pomo:
                         PomoTabView()
+                    case .system:
+                        SystemMonitorView()
                     }
                 }
                 .transition(

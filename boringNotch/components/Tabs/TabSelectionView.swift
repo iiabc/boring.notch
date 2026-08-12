@@ -24,6 +24,7 @@ struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @ObservedObject var agentManager = AgentStatusManager.shared
     @Default(.pomoEnabled) private var pomoEnabled
+    @Default(.systemMonitorEnabled) private var systemMonitorEnabled
     @Namespace var animation
 
     private var visibleTabs: [TabModel] {
@@ -33,6 +34,9 @@ struct TabSelectionView: View {
         }
         if Defaults[.agentStatusEnabled] && agentManager.hasActiveSessions {
             result.append(TabModel(label: "Agents", icon: "terminal", view: .agents))
+        }
+        if systemMonitorEnabled {
+            result.append(TabModel(label: "System", icon: "chart.bar.fill", view: .system))
         }
         return result
     }
@@ -62,6 +66,11 @@ struct TabSelectionView: View {
             }
         }
         .clipShape(Capsule())
+        .onChange(of: systemMonitorEnabled) { _, isEnabled in
+            if !isEnabled && coordinator.currentView == .system {
+                coordinator.currentView = .home
+            }
+        }
     }
 }
 

@@ -26,6 +26,9 @@ struct Appearance: View {
         Form {
             Section {
                 Toggle("Always show tabs", isOn: $coordinator.alwaysShowTabs)
+                Defaults.Toggle(key: .systemMonitorEnabled) {
+                    Text("Show system tab")
+                }
                 Defaults.Toggle(key: .settingsIconInNotch) {
                     Text("Show settings icon in notch")
                 }

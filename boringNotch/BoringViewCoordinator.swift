@@ -173,7 +173,14 @@ class BoringViewCoordinator: ObservableObject {
 
     let activityCenter = NotchActivityCenter()
 
-    @Published var currentView: NotchViews = .home
+    @AppStorage("lastNotchView") private var lastNotchViewRawValue: String = NotchViews.home.rawValue
+
+    @Published var currentView: NotchViews = .home {
+        didSet {
+            guard currentView != oldValue else { return }
+            lastNotchViewRawValue = currentView.rawValue
+        }
+    }
     @Published var helloAnimationRunning: Bool = false
     private var sneakPeekDispatch: DispatchWorkItem?
     private var expandingViewDispatch: DispatchWorkItem?
@@ -202,6 +209,40 @@ class BoringViewCoordinator: ObservableObject {
             if openLastTabByDefault {
                 alwaysShowTabs = true
             }
+        }
+    }
+
+    func prepareViewForOpening() {
+        if openLastTabByDefault,
+           let lastView = NotchViews(rawValue: lastNotchViewRawValue),
+           isViewAvailable(lastView) {
+            currentView = lastView
+        } else if isShelfDefaultAvailable {
+            currentView = .shelf
+        } else {
+            currentView = .home
+        }
+    }
+
+    private var isShelfDefaultAvailable: Bool {
+        Defaults[.boringShelf]
+            && !ShelfStateViewModel.shared.isEmpty
+            && Defaults[.openShelfByDefault]
+    }
+
+    private func isViewAvailable(_ view: NotchViews) -> Bool {
+        switch view {
+        case .home:
+            return true
+        case .shelf:
+            return Defaults[.boringShelf]
+                && (!ShelfStateViewModel.shared.isEmpty || alwaysShowTabs)
+        case .agents:
+            return Defaults[.agentStatusEnabled] && AgentStatusManager.shared.hasActiveSessions
+        case .pomo:
+            return Defaults[.pomoEnabled]
+        case .system:
+            return Defaults[.systemMonitorEnabled]
         }
     }
     

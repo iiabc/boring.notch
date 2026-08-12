@@ -18,11 +18,12 @@ public enum NotchState {
     case open
 }
 
-public enum NotchViews {
+public enum NotchViews: String, Equatable {
     case home
     case shelf
     case agents
     case pomo
+    case system
 }
 
 enum DownloadIndicatorStyle: String, Defaults.Serializable {

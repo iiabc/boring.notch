@@ -344,6 +344,9 @@ extension Defaults.Keys {
     // MARK: Agents
     static let agentStatusEnabled = Key<Bool>("agentStatusEnabled", default: true)
 
+    // MARK: System monitor
+    static let systemMonitorEnabled = Key<Bool>("systemMonitorEnabled", default: true)
+
     // MARK: Pomodoro
     static let pomoEnabled = Key<Bool>("pomoEnabled", default: true)
     static let pomoWorkDuration = Key<TimeInterval>("pomoWorkDuration", default: 25 * 60)

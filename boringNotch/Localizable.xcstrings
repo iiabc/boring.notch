@@ -29094,6 +29094,84 @@
         }
       }
     },
+    "CPU" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CPU" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "CPU" } }
+      }
+    },
+    "Memory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "内存" } }
+      }
+    },
+    "Storage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Storage" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "存储" } }
+      }
+    },
+    "External" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "External" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "外接硬盘" } }
+      }
+    },
+    "CPU usage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CPU usage" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "CPU 使用率" } }
+      }
+    },
+    "Memory usage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory usage" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "内存使用率" } }
+      }
+    },
+    "Used" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Used" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已用" } }
+      }
+    },
+    "Total" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Total" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "总计" } }
+      }
+    },
+    "Free" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Free" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可用" } }
+      }
+    },
+    "Cores" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cores" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "核心数" } }
+      }
+    },
+    "Updated" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "刷新" } }
+      }
+    },
+    "No external drives connected" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No external drives connected" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未连接外接硬盘" } }
+      }
+    },
+    "Show system tab" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show system tab" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示系统标签页" } }
+      }
+    },
     "YouTube Music requires this third-party app to be installed: " : {
       "localizations" : {
         "cs" : {
