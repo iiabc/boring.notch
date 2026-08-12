@@ -901,8 +901,12 @@
         }
       }
     },
-    "Accessibility access is only needed when using built-in macOS control sources for OSD replacement. External sources like BetterDisplay or Lunar do not require Accessibility. You can enable it later in OSD settings if needed." : {},
-    "Accessibility access is used only to improve media and brightness notifications. No data is collected or shared." : {},
+    "Accessibility access is only needed when using built-in macOS control sources for OSD replacement. External sources like BetterDisplay or Lunar do not require Accessibility. You can enable it later in OSD settings if needed." : {
+
+    },
+    "Accessibility access is used only to improve media and brightness notifications. No data is collected or shared." : {
+
+    },
     "Accessibility Access Required" : {
       "localizations" : {
         "de" : {
@@ -2402,7 +2406,9 @@
         }
       }
     },
-    "Audio is processed locally for the visualizer and never recorded, stored, or shared." : {},
+    "Audio is processed locally for the visualizer and never recorded, stored, or shared." : {
+
+    },
     "Authentication required" : {
       "localizations" : {
         "en" : {
@@ -3550,7 +3556,9 @@
         }
       }
     },
-    "Beta" : {},
+    "Beta" : {
+
+    },
     "BetterDisplay is not installed or not running" : {
       "localizations" : {
         "en" : {
@@ -3661,7 +3669,9 @@
         }
       }
     },
-    "Boring Notch can analyze the audio playing from your music app to draw a live FFT waveform in the notch, with only a minimal impact on CPU usage." : {},
+    "Boring Notch can analyze the audio playing from your music app to draw a live FFT waveform in the notch, with only a minimal impact on CPU usage." : {
+
+    },
     "Boring Notch can check for updates in the background. You can still check manually from the menu bar at any time." : {
       "comment" : "A description of the software update permission.",
       "localizations" : {
@@ -3703,9 +3713,15 @@
         }
       }
     },
-    "Boring Notch can show all your upcoming events in one place. Access to your calendar is needed to display your schedule." : {},
-    "Boring Notch can show your scheduled reminders alongside your calendar events. Access to Reminders is needed to display your reminders." : {},
-    "Boring Notch includes a mirror feature that lets you quickly check your appearance using your camera, right from the notch. Camera access is required only to show this live preview. You can turn the mirror feature on or off at any time in the app." : {},
+    "Boring Notch can show all your upcoming events in one place. Access to your calendar is needed to display your schedule." : {
+
+    },
+    "Boring Notch can show your scheduled reminders alongside your calendar events. Access to Reminders is needed to display your reminders." : {
+
+    },
+    "Boring Notch includes a mirror feature that lets you quickly check your appearance using your camera, right from the notch. Camera access is required only to show this live preview. You can turn the mirror feature on or off at any time in the app." : {
+
+    },
     "Boring Notch Settings" : {
       "localizations" : {
         "en" : {
@@ -5106,7 +5122,9 @@
         }
       }
     },
-    "Checkout" : {},
+    "Checkout" : {
+
+    },
     "Choose a Music Source" : {
       "localizations" : {
         "cs" : {
@@ -6971,6 +6989,7 @@
       }
     },
     "Cores" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9130,7 +9149,9 @@
         }
       }
     },
-    "Enable Accessibility Access" : {},
+    "Enable Accessibility Access" : {
+
+    },
     "Enable blur effect behind album art" : {
       "localizations" : {
         "cs" : {
@@ -9361,8 +9382,12 @@
         }
       }
     },
-    "Enable Calendar Access" : {},
-    "Enable Camera Access" : {},
+    "Enable Calendar Access" : {
+
+    },
+    "Enable Camera Access" : {
+
+    },
     "Enable gestures" : {
       "localizations" : {
         "cs" : {
@@ -9768,8 +9793,12 @@
         }
       }
     },
-    "Enable Real-Time Audio" : {},
-    "Enable Reminders Access" : {},
+    "Enable Real-Time Audio" : {
+
+    },
+    "Enable Reminders Access" : {
+
+    },
     "Enable shelf" : {
       "localizations" : {
         "cs" : {
@@ -10117,7 +10146,9 @@
         }
       }
     },
-    "Exit" : {},
+    "Exit" : {
+
+    },
     "Expanded drag detection area" : {
       "localizations" : {
         "de" : {
@@ -11840,7 +11871,9 @@
         }
       }
     },
-    "Hide" : {},
+    "Hide" : {
+
+    },
     "Hide all-day events" : {
       "localizations" : {
         "cs" : {
@@ -13790,6 +13823,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "佈局預覽"
+          }
+        }
+      }
+    },
+    "Load 1m" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load 1m"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 分钟负载"
+          }
+        }
+      }
+    },
+    "Load 5m" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load 5m"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 分钟负载"
           }
         }
       }
@@ -16517,6 +16582,38 @@
         }
       }
     },
+    "Network" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络"
+          }
+        }
+      }
+    },
+    "Network speed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network speed"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络速度"
+          }
+        }
+      }
+    },
     "Never hide" : {
       "localizations" : {
         "cs" : {
@@ -17902,7 +17999,9 @@
         }
       }
     },
-    "Only Apple displays are supported. In multi-display setups, the brightness OSD appears on the active display if supported, or on another supported display otherwise." : {},
+    "Only Apple displays are supported. In multi-display setups, the brightness OSD appears on the active display if supported, or on another supported display otherwise." : {
+
+    },
     "Open Calendar Settings" : {
       "localizations" : {
         "cs" : {
@@ -18444,7 +18543,9 @@
         }
       }
     },
-    "Open System Settings" : {},
+    "Open System Settings" : {
+
+    },
     "Option (⌥) Key Behavior" : {
       "localizations" : {
         "cs" : {
@@ -19020,6 +19121,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已暂停"
+          }
+        }
+      }
+    },
+    "Peak" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peak"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "峰值"
           }
         }
       }
@@ -27545,7 +27662,24 @@
         }
       }
     },
+    "Up" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上行"
+          }
+        }
+      }
+    },
     "Updated" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -29217,8 +29351,12 @@
         }
       }
     },
-    "Your calendar data is only used to show your events and is never shared." : {},
-    "Your camera is never used without your consent, and nothing is recorded or stored." : {},
+    "Your calendar data is only used to show your events and is never shared." : {
+
+    },
+    "Your camera is never used without your consent, and nothing is recorded or stored." : {
+
+    },
     "Your macOS system accent color" : {
       "localizations" : {
         "de" : {
@@ -29325,7 +29463,9 @@
         }
       }
     },
-    "Your reminders data is only used to show your reminders and is never shared." : {},
+    "Your reminders data is only used to show your reminders and is never shared." : {
+
+    },
     "YouTube Music" : {
       "localizations" : {
         "en" : {
@@ -29450,70 +29590,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YouTube 音樂需要安裝此第三方應用程式: "
-          }
-        }
-      }
-    },
-    "Network" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "网络"
-          }
-        }
-      }
-    },
-    "Network speed" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network speed"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "网络速度"
-          }
-        }
-      }
-    },
-    "Up" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Up"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上行"
-          }
-        }
-      }
-    },
-    "Peak" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Peak"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "峰值"
           }
         }
       }

@@ -35,6 +35,57 @@ enum SystemMonitorIslandKind: String, CaseIterable, Identifiable {
     }
 }
 
+struct MetricTrendView: View {
+    let samples: [Double]
+    let accent: Color
+
+    var body: some View {
+        GeometryReader { geo in
+            let points = points(in: geo.size)
+            if points.count > 1 {
+                areaPath(points: points, in: geo.size)
+                    .fill(
+                        LinearGradient(
+                            colors: [accent.opacity(0.25), accent.opacity(0.02)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                linePath(points: points)
+                    .stroke(accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+            }
+        }
+        .animation(.smooth(duration: 0.6), value: samples)
+    }
+
+    private func points(in size: CGSize) -> [CGPoint] {
+        guard samples.count > 1 else { return [] }
+        let peak = max(samples.max() ?? 0, 0.001)
+        let stepX = size.width / CGFloat(samples.count - 1)
+        return samples.enumerated().map { index, value in
+            CGPoint(
+                x: CGFloat(index) * stepX,
+                y: size.height - CGFloat(value / peak) * (size.height - 4) - 2
+            )
+        }
+    }
+
+    private func linePath(points: [CGPoint]) -> Path {
+        Path { path in
+            path.addLines(points)
+        }
+    }
+
+    private func areaPath(points: [CGPoint], in size: CGSize) -> Path {
+        Path { path in
+            path.addLines(points)
+            path.addLine(to: CGPoint(x: size.width, y: size.height))
+            path.addLine(to: CGPoint(x: 0, y: size.height))
+            path.closeSubpath()
+        }
+    }
+}
+
 struct MetricIslandDetail: Identifiable {
     let id = UUID()
     let title: LocalizedStringKey
@@ -50,6 +101,8 @@ struct MetricIslandView: View {
     let details: [MetricIslandDetail]
     var ringSize: CGFloat = 76
     var showsBackground: Bool = true
+    var trendSamples: [Double]? = nil
+    var trailing: AnyView? = nil
 
     private var clampedProgress: Double {
         min(1, max(0, progress))
@@ -78,6 +131,12 @@ struct MetricIslandView: View {
                 }
             }
             Spacer(minLength: 0)
+            if let trendSamples {
+                MetricTrendView(samples: trendSamples, accent: accent)
+                    .frame(width: 170, height: 54)
+            } else if let trailing {
+                trailing
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -138,7 +197,8 @@ struct MemoryMetricIslandView: View {
                 MetricIslandDetail(title: "Used", value: MetricIslandView.formatBytes(monitor.usedMemoryBytes)),
                 MetricIslandDetail(title: "Total", value: MetricIslandView.formatBytes(monitor.totalMemoryBytes))
             ],
-            showsBackground: showsBackground
+            showsBackground: showsBackground,
+            trendSamples: monitor.memoryHistory
         )
     }
 }
@@ -155,10 +215,11 @@ struct CPUMetricIslandView: View {
             progress: monitor.cpuUsage,
             valueText: MetricIslandView.percentage(monitor.cpuUsage),
             details: [
-                MetricIslandDetail(title: "Cores", value: "\(monitor.cpuCoreCount)"),
-                MetricIslandDetail(title: "Updated", value: "1s")
+                MetricIslandDetail(title: "Load 1m", value: String(format: "%.2f", monitor.loadAverage1m)),
+                MetricIslandDetail(title: "Load 5m", value: String(format: "%.2f", monitor.loadAverage5m))
             ],
-            showsBackground: showsBackground
+            showsBackground: showsBackground,
+            trendSamples: monitor.cpuHistory
         )
     }
 }
@@ -183,7 +244,8 @@ struct NetworkMetricIslandView: View {
                 MetricIslandDetail(title: "Up", value: MetricIslandView.formatRate(monitor.networkUploadRate)),
                 MetricIslandDetail(title: "Peak", value: MetricIslandView.formatRate(monitor.networkPeakRate))
             ],
-            showsBackground: showsBackground
+            showsBackground: showsBackground,
+            trendSamples: monitor.networkHistory
         )
     }
 }
@@ -198,10 +260,23 @@ extension MetricIslandView {
             valueText: Self.percentage(volume.usage),
             details: [
                 MetricIslandDetail(title: "Used", value: Self.formatBytes(volume.usedBytes)),
-                MetricIslandDetail(title: "Free", value: Self.formatBytes(volume.availableBytes))
+                MetricIslandDetail(title: "Total", value: Self.formatBytes(volume.totalBytes))
             ],
-            showsBackground: showsBackground
+            showsBackground: showsBackground,
+            trailing: AnyView(storageTrailing(volume: volume))
         )
+    }
+
+    private static func storageTrailing(volume: SystemVolumeStatus) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(Self.formatBytes(volume.availableBytes))
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText())
+            Text("Free")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
     }
 
     static func percentage(_ value: Double) -> String {

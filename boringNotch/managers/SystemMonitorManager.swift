@@ -42,6 +42,13 @@ final class SystemMonitorManager: ObservableObject {
     @Published private(set) var networkDownloadRate: Double = 0
     @Published private(set) var networkUploadRate: Double = 0
     @Published private(set) var networkPeakRate: Double = 0
+    @Published private(set) var cpuHistory: [Double] = []
+    @Published private(set) var memoryHistory: [Double] = []
+    @Published private(set) var networkHistory: [Double] = []
+    @Published private(set) var loadAverage1m: Double = 0
+    @Published private(set) var loadAverage5m: Double = 0
+
+    private let historyLimit = 60
 
     private var refreshTimer: Timer?
     private var storageRefreshTimer: Timer?
@@ -114,6 +121,26 @@ final class SystemMonitorManager: ObservableObject {
         networkUploadRate = network.upload
         let currentPeak = max(network.download, network.upload)
         networkPeakRate = max(currentPeak, networkPeakRate * 0.95, 1_024)
+
+        let memoryUsage = memory.totalBytes > 0
+            ? min(1, max(0, Double(memory.usedBytes) / Double(memory.totalBytes)))
+            : 0
+        appendHistory(value: cpu.usage, to: &cpuHistory)
+        appendHistory(value: memoryUsage, to: &memoryHistory)
+        appendHistory(value: network.download, to: &networkHistory)
+
+        var loadAverages = [Double](repeating: 0, count: 2)
+        if getloadavg(&loadAverages, 2) == 2 {
+            loadAverage1m = loadAverages[0]
+            loadAverage5m = loadAverages[1]
+        }
+    }
+
+    private func appendHistory(value: Double, to history: inout [Double]) {
+        history.append(value)
+        if history.count > historyLimit {
+            history.removeFirst(history.count - historyLimit)
+        }
     }
 
     private func readNetworkRates() -> (download: Double, upload: Double) {
