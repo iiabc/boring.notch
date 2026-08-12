@@ -26,6 +26,9 @@ struct SystemMonitorSettings: View {
                 Defaults.Toggle(key: .systemMonitorStorageVisible) {
                     Label(SystemMonitorIslandKind.storage.title, systemImage: SystemMonitorIslandKind.storage.icon)
                 }
+                Defaults.Toggle(key: .systemMonitorNetworkVisible) {
+                    Label(SystemMonitorIslandKind.network.title, systemImage: SystemMonitorIslandKind.network.icon)
+                }
             } header: {
                 Text("System monitor islands")
             }

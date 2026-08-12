@@ -39,12 +39,18 @@ final class SystemMonitorManager: ObservableObject {
         availableBytes: 0
     )
     @Published private(set) var externalVolumes: [SystemVolumeStatus] = []
+    @Published private(set) var networkDownloadRate: Double = 0
+    @Published private(set) var networkUploadRate: Double = 0
+    @Published private(set) var networkPeakRate: Double = 0
 
     private var refreshTimer: Timer?
     private var storageRefreshTimer: Timer?
     private var mountObservers: [NSObjectProtocol] = []
     private var previousCPUTotalTicks: UInt64 = 0
     private var previousCPUActiveTicks: UInt64 = 0
+    private var previousNetworkDownloadBytes: UInt64 = 0
+    private var previousNetworkUploadBytes: UInt64 = 0
+    private var previousNetworkSampleDate: Date?
 
     private init() {
         let workspaceCenter = NSWorkspace.shared.notificationCenter
@@ -98,11 +104,67 @@ final class SystemMonitorManager: ObservableObject {
     private func refreshResourceUsage() {
         let cpu = readCPUUsage()
         let memory = Self.readMemoryUsage()
+        let network = readNetworkRates()
 
         cpuCoreCount = cpu.coreCount
         cpuUsage = cpu.usage
         usedMemoryBytes = memory.usedBytes
         totalMemoryBytes = memory.totalBytes
+        networkDownloadRate = network.download
+        networkUploadRate = network.upload
+        let currentPeak = max(network.download, network.upload)
+        networkPeakRate = max(currentPeak, networkPeakRate * 0.95, 1_024)
+    }
+
+    private func readNetworkRates() -> (download: Double, upload: Double) {
+        let counters = Self.readNetworkCounters()
+        let now = Date()
+        defer {
+            previousNetworkDownloadBytes = counters.download
+            previousNetworkUploadBytes = counters.upload
+            previousNetworkSampleDate = now
+        }
+
+        guard let previousDate = previousNetworkSampleDate else {
+            return (networkDownloadRate, networkUploadRate)
+        }
+
+        let elapsed = now.timeIntervalSince(previousDate)
+        guard elapsed > 0,
+              counters.download >= previousNetworkDownloadBytes,
+              counters.upload >= previousNetworkUploadBytes else {
+            return (0, 0)
+        }
+
+        return (
+            Double(counters.download - previousNetworkDownloadBytes) / elapsed,
+            Double(counters.upload - previousNetworkUploadBytes) / elapsed
+        )
+    }
+
+    private static func readNetworkCounters() -> (download: UInt64, upload: UInt64) {
+        var addresses: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&addresses) == 0, let first = addresses else {
+            return (0, 0)
+        }
+        defer { freeifaddrs(addresses) }
+
+        var download: UInt64 = 0
+        var upload: UInt64 = 0
+        var cursor: UnsafeMutablePointer<ifaddrs>? = first
+        while let interface = cursor {
+            let name = String(cString: interface.pointee.ifa_name)
+            if name.hasPrefix("en"),
+               let address = interface.pointee.ifa_addr,
+               Int32(address.pointee.sa_family) == AF_LINK,
+               let data = interface.pointee.ifa_data {
+                let counters = data.assumingMemoryBound(to: if_data.self).pointee
+                download += UInt64(counters.ifi_ibytes)
+                upload += UInt64(counters.ifi_obytes)
+            }
+            cursor = interface.pointee.ifa_next
+        }
+        return (download, upload)
     }
 
     private func refreshStorage() {

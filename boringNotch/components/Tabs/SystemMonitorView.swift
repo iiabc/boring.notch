@@ -8,6 +8,7 @@ struct SystemMonitorView: View {
     @Default(.systemMonitorMemoryVisible) private var memoryVisible
     @Default(.systemMonitorCpuVisible) private var cpuVisible
     @Default(.systemMonitorStorageVisible) private var storageVisible
+    @Default(.systemMonitorNetworkVisible) private var networkVisible
     @Default(.systemMonitorIslandOrder) private var islandOrder
 
     private let islandHeight: CGFloat = 108
@@ -18,12 +19,13 @@ struct SystemMonitorView: View {
             case .memory: memoryVisible
             case .cpu: cpuVisible
             case .storage: storageVisible
+            case .network: networkVisible
             }
         }
     }
 
     private var configSignature: String {
-        "\(memoryVisible)|\(cpuVisible)|\(storageVisible)|\(islandOrder.joined(separator: ","))"
+        "\(memoryVisible)|\(cpuVisible)|\(storageVisible)|\(networkVisible)|\(islandOrder.joined(separator: ","))"
     }
 
     var body: some View {
@@ -71,6 +73,8 @@ struct SystemMonitorView: View {
             CPUMetricIslandView(showsBackground: showsBackground)
         case .storage:
             StorageIslandStackView(monitor: monitor, showsBackground: showsBackground)
+        case .network:
+            NetworkMetricIslandView(showsBackground: showsBackground)
         }
     }
 

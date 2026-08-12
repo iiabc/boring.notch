@@ -4,6 +4,7 @@ enum SystemMonitorIslandKind: String, CaseIterable, Identifiable {
     case memory
     case cpu
     case storage
+    case network
 
     var id: Self { self }
 
@@ -12,6 +13,7 @@ enum SystemMonitorIslandKind: String, CaseIterable, Identifiable {
         case .memory: "Memory"
         case .cpu: "CPU"
         case .storage: "Storage"
+        case .network: "Network"
         }
     }
 
@@ -20,6 +22,7 @@ enum SystemMonitorIslandKind: String, CaseIterable, Identifiable {
         case .memory: "memorychip"
         case .cpu: "cpu"
         case .storage: "internaldrive"
+        case .network: "network"
         }
     }
 
@@ -160,6 +163,31 @@ struct CPUMetricIslandView: View {
     }
 }
 
+struct NetworkMetricIslandView: View {
+    @ObservedObject var monitor = SystemMonitorManager.shared
+    var showsBackground = true
+
+    private var progress: Double {
+        guard monitor.networkPeakRate > 0 else { return 0 }
+        return min(1, max(0, monitor.networkDownloadRate / monitor.networkPeakRate))
+    }
+
+    var body: some View {
+        MetricIslandView(
+            title: String(localized: "Network speed"),
+            systemImage: "network",
+            accent: .green,
+            progress: progress,
+            valueText: MetricIslandView.formatRate(monitor.networkDownloadRate),
+            details: [
+                MetricIslandDetail(title: "Up", value: MetricIslandView.formatRate(monitor.networkUploadRate)),
+                MetricIslandDetail(title: "Peak", value: MetricIslandView.formatRate(monitor.networkPeakRate))
+            ],
+            showsBackground: showsBackground
+        )
+    }
+}
+
 extension MetricIslandView {
     static func storage(volume: SystemVolumeStatus, showsBackground: Bool = true) -> MetricIslandView {
         MetricIslandView(
@@ -182,5 +210,22 @@ extension MetricIslandView {
 
     static func formatBytes(_ bytes: UInt64) -> String {
         ByteCountFormatter.string(fromByteCount: Int64(min(bytes, UInt64(Int64.max))), countStyle: .file)
+    }
+
+    static func formatRate(_ bytesPerSecond: Double) -> String {
+        let units = ["B", "K", "M", "G"]
+        var value = max(0, bytesPerSecond)
+        var unitIndex = 0
+        while value >= 1024 && unitIndex < units.count - 1 {
+            value /= 1024
+            unitIndex += 1
+        }
+        let number: String
+        if value >= 100 || unitIndex == 0 {
+            number = "\(Int(value.rounded()))"
+        } else {
+            number = String(format: "%.1f", value)
+        }
+        return "\(number)\(units[unitIndex])/s"
     }
 }
