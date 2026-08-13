@@ -59,6 +59,8 @@ final class BNLunarBrightnessEvent: NSObject, NSSecureCoding {
     func stopLunarEventStream()
     /// Write Lunar's hideOSD preference (disable/enable Lunar's OSD when we replace it).
     func setLunarOSDHidden(_ hide: Bool, with reply: @escaping (Bool) -> Void)
+    /// Fetch top CPU / memory processes (real libtop data, Activity Monitor parity).
+    func fetchTopProcessesJSON(with reply: @escaping (String?) -> Void)
 }
 
 /*

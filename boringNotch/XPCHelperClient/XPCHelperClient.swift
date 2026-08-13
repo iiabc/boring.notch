@@ -365,5 +365,24 @@ final class XPCHelperClient: NSObject {
             return false
         }
     }
+
+    // MARK: - Process monitoring
+
+    nonisolated func fetchTopProcesses() async -> TopProcessesDTO? {
+        do {
+            let service = await MainActor.run {
+                ensureRemoteService()
+            }
+            let json: String? = try await service.withContinuation { service, continuation in
+                service.fetchTopProcessesJSON { result in
+                    continuation.resume(returning: result)
+                }
+            }
+            guard let json, let data = json.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode(TopProcessesDTO.self, from: data)
+        } catch {
+            return nil
+        }
+    }
 }
 

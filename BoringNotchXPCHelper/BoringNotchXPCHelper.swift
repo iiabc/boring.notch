@@ -362,6 +362,128 @@ class BoringNotchXPCHelper: NSObject, BoringNotchXPCHelperProtocol {
         reply(ok)
     }
 
+    // MARK: - Process monitoring (libtop parity via /usr/bin/top)
+
+    @objc func fetchTopProcessesJSON(with reply: @escaping (String?) -> Void) {
+        DispatchQueue.global(qos: .utility).async {
+            reply(Self.sampleTopProcessesJSON())
+        }
+    }
+
+    private struct HelperProcessSample: Codable {
+        let pid: Int32
+        let name: String
+        let cpu: Double
+        let mem: UInt64
+        let path: String
+    }
+
+    private struct HelperTopProcesses: Codable {
+        let cpu: [HelperProcessSample]
+        let memory: [HelperProcessSample]
+    }
+
+    private static func sampleTopProcessesJSON() -> String? {
+        let rawSamples = sampleTop()
+        guard !rawSamples.isEmpty else { return nil }
+
+        let resolved = rawSamples.map { sample -> HelperProcessSample in
+            let path = executablePath(pid: sample.pid)
+            let name: String
+            if sample.pid == 0 {
+                name = "kernel_task"
+            } else if !path.isEmpty {
+                name = URL(fileURLWithPath: path).lastPathComponent
+            } else {
+                name = sample.topName
+            }
+            return HelperProcessSample(pid: sample.pid, name: name, cpu: sample.cpu, mem: sample.mem, path: path)
+        }
+
+        let payload = HelperTopProcesses(
+            cpu: Array(resolved.sorted { $0.cpu > $1.cpu }.prefix(8)),
+            memory: Array(resolved.sorted { $0.mem > $1.mem }.prefix(8))
+        )
+
+        guard let data = try? JSONEncoder().encode(payload) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private struct RawSample {
+        let pid: Int32
+        let topName: String
+        let cpu: Double
+        let mem: UInt64
+    }
+
+    private static func sampleTop() -> [RawSample] {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/top")
+        process.arguments = ["-l", "2", "-stats", "pid,command,cpu,mem", "-n", "600"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+        } catch {
+            return []
+        }
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        guard let output = String(data: data, encoding: .utf8) else { return [] }
+        return parseTop(output)
+    }
+
+    private static func parseTop(_ output: String) -> [RawSample] {
+        let lines = output.components(separatedBy: "\n")
+        guard let lastHeader = lines.lastIndex(where: { $0.hasPrefix("PID") }) else {
+            return []
+        }
+
+        var samples: [RawSample] = []
+        for line in lines[(lastHeader + 1)...] {
+            let tokens = line.split(whereSeparator: { $0.isWhitespace })
+            guard tokens.count >= 4, let pid = Int32(tokens[0]) else { continue }
+            let cpu = Double(tokens[tokens.count - 2]) ?? 0
+            let mem = parseMemory(String(tokens[tokens.count - 1]))
+            let name = tokens[1..<(tokens.count - 2)].joined(separator: " ")
+            samples.append(RawSample(pid: pid, topName: name, cpu: cpu, mem: mem))
+        }
+        return samples
+    }
+
+    private static func parseMemory(_ raw: String) -> UInt64 {
+        var text = raw.trimmingCharacters(in: .whitespaces)
+        while let last = text.last, last == "+" || last == "-" {
+            text.removeLast()
+        }
+        let units: [Character: Double] = [
+            "B": 1,
+            "K": 1024,
+            "M": 1024 * 1024,
+            "G": 1024 * 1024 * 1024,
+            "T": 1024 * 1024 * 1024 * 1024,
+        ]
+        var multiplier: Double = 1
+        if let last = text.last, let unit = units[last] {
+            multiplier = unit
+            text = String(text.dropLast())
+        }
+        let digits = text.filter { $0.isNumber || $0 == "." }
+        guard let value = Double(digits) else { return 0 }
+        return UInt64(value * multiplier)
+    }
+
+    private static func executablePath(pid: Int32) -> String {
+        var buffer = [CChar](repeating: 0, count: 4096)
+        let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
+        guard length > 0 else { return "" }
+        return String(cString: buffer)
+    }
+
     // MARK: - Private helpers for DisplayServices / IOKit access
     private func displayServicesGetBrightness(displayID: CGDirectDisplayID, out: inout Float) -> Bool {
         guard let sym = dlsym(DisplayServicesHandle.handle, "DisplayServicesGetBrightness") else { return false }

@@ -21,6 +21,27 @@ struct SystemVolumeStatus: Identifiable, Equatable {
     }
 }
 
+struct MonitoredProcess: Identifiable {
+    let id: Int32
+    let name: String
+    let cpuPercent: Double
+    let memoryBytes: UInt64
+    let icon: NSImage?
+}
+
+struct ProcessSampleDTO: Codable {
+    let pid: Int32
+    let name: String
+    let cpu: Double
+    let mem: UInt64
+    let path: String
+}
+
+struct TopProcessesDTO: Codable {
+    let cpu: [ProcessSampleDTO]
+    let memory: [ProcessSampleDTO]
+}
+
 @MainActor
 final class SystemMonitorManager: ObservableObject {
     static let shared = SystemMonitorManager()
@@ -49,17 +70,23 @@ final class SystemMonitorManager: ObservableObject {
     @Published private(set) var networkHistory: [Double] = []
     @Published private(set) var loadAverage1m: Double = 0
     @Published private(set) var loadAverage5m: Double = 0
+    @Published private(set) var topMemoryProcesses: [MonitoredProcess] = []
+    @Published private(set) var topCPUProcesses: [MonitoredProcess] = []
 
     private let historyLimit = 60
 
     private var refreshTimer: Timer?
     private var storageRefreshTimer: Timer?
+    private var processRefreshTimer: Timer?
     private var mountObservers: [NSObjectProtocol] = []
     private var previousCPUTotalTicks: UInt64 = 0
     private var previousCPUActiveTicks: UInt64 = 0
     private var previousNetworkDownloadBytes: UInt64 = 0
     private var previousNetworkUploadBytes: UInt64 = 0
     private var previousNetworkSampleDate: Date?
+
+    private let processRefreshInterval: TimeInterval = 3
+    private var processSampleInFlight = false
 
     private init() {
         let workspaceCenter = NSWorkspace.shared.notificationCenter
@@ -86,6 +113,7 @@ final class SystemMonitorManager: ObservableObject {
     func startMonitoring() {
         guard refreshTimer == nil else { return }
         refresh()
+        refreshProcessLists()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: resourceRefreshInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.refreshResourceUsage()
@@ -96,6 +124,11 @@ final class SystemMonitorManager: ObservableObject {
                 self?.refreshStorage()
             }
         }
+        processRefreshTimer = Timer.scheduledTimer(withTimeInterval: processRefreshInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshProcessLists()
+            }
+        }
     }
 
     func stopMonitoring() {
@@ -103,6 +136,8 @@ final class SystemMonitorManager: ObservableObject {
         refreshTimer = nil
         storageRefreshTimer?.invalidate()
         storageRefreshTimer = nil
+        processRefreshTimer?.invalidate()
+        processRefreshTimer = nil
     }
 
     func refresh() {
@@ -357,5 +392,44 @@ final class SystemMonitorManager: ObservableObject {
             availableBytes: UInt64(max(0, availableCapacity)),
             purgeableBytes: UInt64(max(0, purgeableCapacity))
         )
+    }
+
+    // MARK: - Per-process CPU / memory
+
+    private func refreshProcessLists() {
+        guard !processSampleInFlight else { return }
+        processSampleInFlight = true
+        Task { [weak self] in
+            let dto = await XPCHelperClient.shared.fetchTopProcesses()
+            guard let self else { return }
+            self.processSampleInFlight = false
+            guard let dto else { return }
+            self.topCPUProcesses = dto.cpu.map { self.buildProcess($0) }
+            self.topMemoryProcesses = dto.memory.map { self.buildProcess($0) }
+        }
+    }
+
+    private func buildProcess(_ dto: ProcessSampleDTO) -> MonitoredProcess {
+        MonitoredProcess(
+            id: dto.pid,
+            name: dto.name,
+            cpuPercent: dto.cpu,
+            memoryBytes: dto.mem,
+            icon: Self.icon(pid: dto.pid, path: dto.path)
+        )
+    }
+
+    private static func icon(pid: Int32, path: String) -> NSImage? {
+        if let runningApp = NSRunningApplication(processIdentifier: pid), let icon = runningApp.icon {
+            return icon
+        }
+        if !path.isEmpty {
+            let icon = NSWorkspace.shared.icon(forFile: path)
+            icon.size = NSSize(width: 32, height: 32)
+            return icon
+        }
+        let fallback = NSWorkspace.shared.icon(for: .unixExecutable)
+        fallback.size = NSSize(width: 32, height: 32)
+        return fallback
     }
 }

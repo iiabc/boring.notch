@@ -48,10 +48,12 @@ struct SystemMonitorView: View {
         .onDisappear {
             monitor.stopMonitoring()
             IslandWindowManager.shared.dismiss(for: vm)
+            ProcessDetailWindowManager.shared.hide()
         }
         .onChange(of: vm.notchState) {
             if vm.notchState == .closed {
                 IslandWindowManager.shared.dismiss(for: vm)
+                ProcessDetailWindowManager.shared.hide()
             } else {
                 presentIslands()
             }
@@ -69,8 +71,16 @@ struct SystemMonitorView: View {
         switch kind {
         case .memory:
             MemoryMetricIslandView(showsBackground: showsBackground)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    ProcessDetailWindowManager.shared.toggle(kind: .memory, for: vm)
+                }
         case .cpu:
             CPUMetricIslandView(showsBackground: showsBackground)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    ProcessDetailWindowManager.shared.toggle(kind: .cpu, for: vm)
+                }
         case .storage:
             StorageIslandStackView(monitor: monitor, showsBackground: showsBackground)
         case .network:

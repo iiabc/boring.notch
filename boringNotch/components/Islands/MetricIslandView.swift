@@ -305,3 +305,245 @@ extension MetricIslandView {
         return "\(number)\(units[unitIndex])/s"
     }
 }
+
+// MARK: - Per-process detail panel (iStat Menus style)
+
+struct ProcessDetailPanel: View {
+    enum Kind {
+        case memory
+        case cpu
+    }
+
+    let kind: Kind
+    @ObservedObject private var monitor = SystemMonitorManager.shared
+
+    private var processes: [MonitoredProcess] {
+        switch kind {
+        case .memory: monitor.topMemoryProcesses
+        case .cpu: monitor.topCPUProcesses
+        }
+    }
+
+    private var title: String {
+        switch kind {
+        case .memory: String(localized: "Top Memory")
+        case .cpu: String(localized: "Top CPU")
+        }
+    }
+
+    private var subtitle: String {
+        switch kind {
+        case .memory: String(localized: "Physical memory · Top 8")
+        case .cpu: String(localized: "% CPU · Top 8")
+        }
+    }
+
+    private var accent: Color {
+        switch kind {
+        case .memory: .purple
+        case .cpu: .blue
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            Divider().overlay(Color.white.opacity(0.15))
+            if processes.isEmpty {
+                Text("Collecting data…")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(processes.enumerated()), id: \.element.id) { index, process in
+                        ProcessRow(process: process, kind: kind)
+                        if index < processes.count - 1 {
+                            Divider().overlay(Color.white.opacity(0.06))
+                                .padding(.leading, 48)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(width: 340, height: 384, alignment: .top)
+        .background {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.black)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: kind == .memory ? "memorychip" : "cpu")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(accent)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+}
+
+private struct ProcessRow: View {
+    let process: MonitoredProcess
+    let kind: ProcessDetailPanel.Kind
+
+    var body: some View {
+        HStack(spacing: 10) {
+            if let icon = process.icon {
+                Image(nsImage: icon)
+                    .resizable()
+                    .frame(width: 20, height: 20)
+            } else {
+                Image(systemName: "app")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 20)
+            }
+            Text(process.name)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 12)
+            Text(valueText)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+    }
+
+    private var valueText: String {
+        switch kind {
+        case .memory: MetricIslandView.formatBytes(process.memoryBytes)
+        case .cpu: String(format: "%.1f%%", process.cpuPercent)
+        }
+    }
+}
+
+@MainActor
+final class ProcessDetailWindowManager {
+    static let shared = ProcessDetailWindowManager()
+
+    private static let panelSize = NSSize(width: 340, height: 384)
+
+    private var window: BoringNotchSkyLightWindow?
+    private var activeKind: ProcessDetailPanel.Kind?
+    private var mouseDownGlobal: Any?
+    private var mouseDownLocal: Any?
+    private var scheduledHide: Task<Void, Never>?
+
+    private init() {}
+
+    var isShowing: Bool { window != nil }
+
+    func toggle(kind: ProcessDetailPanel.Kind, for viewModel: BoringViewModel) {
+        scheduledHide?.cancel()
+        scheduledHide = nil
+        if activeKind == kind {
+            hide()
+        } else {
+            show(kind: kind, for: viewModel)
+        }
+    }
+
+    func show(kind: ProcessDetailPanel.Kind, for viewModel: BoringViewModel) {
+        hide()
+        activeKind = kind
+
+        guard let screen = viewModel.screenUUID.flatMap({ NSScreen.screen(withUUID: $0) }) ?? NSScreen.main else {
+            activeKind = nil
+            return
+        }
+        let screenFrame = screen.frame
+        let notchBottomY = screenFrame.maxY - windowSize.height
+        let frame = NSRect(
+            x: screenFrame.midX - Self.panelSize.width / 2,
+            y: notchBottomY - IslandWindowManager.islandGap - Self.panelSize.height,
+            width: Self.panelSize.width,
+            height: Self.panelSize.height
+        )
+
+        let panel = BoringNotchSkyLightWindow(
+            contentRect: frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .mainMenu + 4
+        panel.contentView = NSHostingView(
+            rootView: ProcessDetailPanel(kind: kind).preferredColorScheme(.dark)
+        )
+        panel.orderFrontRegardless()
+        NotchSpaceManager.shared.notchSpace.windows.insert(panel)
+        window = panel
+        installDismissMonitors()
+    }
+
+    func hide() {
+        scheduledHide?.cancel()
+        scheduledHide = nil
+        removeDismissMonitors()
+        activeKind = nil
+        if let window {
+            NotchSpaceManager.shared.notchSpace.windows.remove(window)
+            window.close()
+            self.window = nil
+        }
+    }
+
+    private func installDismissMonitors() {
+        removeDismissMonitors()
+        mouseDownGlobal = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] _ in
+            Task { @MainActor in self?.handleOutsideClick() }
+        }
+        mouseDownLocal = NSEvent.addLocalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] event in
+            Task { @MainActor in self?.handleOutsideClick() }
+            return event
+        }
+    }
+
+    private func removeDismissMonitors() {
+        if let mouseDownGlobal { NSEvent.removeMonitor(mouseDownGlobal) }
+        if let mouseDownLocal { NSEvent.removeMonitor(mouseDownLocal) }
+        mouseDownGlobal = nil
+        mouseDownLocal = nil
+    }
+
+    private func handleOutsideClick() {
+        guard let window, activeKind != nil else { return }
+        let location = NSEvent.mouseLocation
+        if window.frame.contains(location) {
+            scheduledHide?.cancel()
+            scheduledHide = nil
+            return
+        }
+        guard scheduledHide == nil else { return }
+        scheduledHide = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
+            self?.hide()
+        }
+    }
+}
