@@ -24,6 +24,14 @@ final class IslandWindowManager {
 
     private(set) var isHoveringIsland = false
 
+    var isMouseOverIsland: Bool {
+        let location = NSEvent.mouseLocation
+        return contexts.values.contains { context in
+            guard !context.isDismissing, let window = context.window else { return false }
+            return window.frame.contains(location)
+        }
+    }
+
     final class IslandStackPresentation: ObservableObject {
         @Published var presented: [Bool]
 
@@ -164,6 +172,9 @@ final class IslandWindowManager {
                 guard let self, let viewModel, self.contexts[key] != nil else { return }
                 guard viewModel.notchState == .open,
                       !self.isHoveringIsland,
+                      !self.isMouseOverIsland,
+                      !viewModel.isBatteryPopoverActive,
+                      !viewModel.isProcessDetailPopoverActive,
                       !viewModel.isMouseHovering() else { return }
                 viewModel.close()
             }

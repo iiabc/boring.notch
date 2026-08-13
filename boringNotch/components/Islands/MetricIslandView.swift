@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum SystemMonitorIslandKind: String, CaseIterable, Identifiable {
@@ -308,6 +309,161 @@ extension MetricIslandView {
 
 // MARK: - Per-process detail panel (iStat Menus style)
 
+@MainActor
+final class ProcessDetailPopoverController: NSObject, ObservableObject {
+    @Published private(set) var dismissRequested = false
+
+    var windowFrame: NSRect = .zero
+
+    private var globalMouseDownMonitor: Any?
+    private var localMouseDownMonitor: Any?
+
+    func startMonitoring() {
+        stopMonitoring()
+        dismissRequested = false
+
+        globalMouseDownMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.handleMouseDown(at: NSEvent.mouseLocation)
+            }
+        }
+        localMouseDownMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] event in
+            let location = NSEvent.mouseLocation
+            Task { @MainActor [weak self] in
+                self?.handleMouseDown(at: location)
+            }
+            return event
+        }
+    }
+
+    func stopMonitoring() {
+        if let globalMouseDownMonitor {
+            NSEvent.removeMonitor(globalMouseDownMonitor)
+        }
+        if let localMouseDownMonitor {
+            NSEvent.removeMonitor(localMouseDownMonitor)
+        }
+        globalMouseDownMonitor = nil
+        localMouseDownMonitor = nil
+        windowFrame = .zero
+    }
+
+    func consumeDismissRequest() {
+        dismissRequested = false
+    }
+
+    private func handleMouseDown(at location: NSPoint) {
+        guard !windowFrame.isEmpty, !windowFrame.contains(location) else { return }
+        dismissRequested = true
+    }
+
+    deinit {
+        if let globalMouseDownMonitor {
+            NSEvent.removeMonitor(globalMouseDownMonitor)
+        }
+        if let localMouseDownMonitor {
+            NSEvent.removeMonitor(localMouseDownMonitor)
+        }
+    }
+}
+
+private struct ProcessDetailPopoverWindowTracker: NSViewRepresentable {
+    let onFrameChange: (NSRect) -> Void
+
+    func makeNSView(context: Context) -> TrackingView {
+        TrackingView(onFrameChange: onFrameChange)
+    }
+
+    func updateNSView(_ nsView: TrackingView, context: Context) {
+        nsView.onFrameChange = onFrameChange
+        nsView.updateWindowFrame()
+    }
+
+    final class TrackingView: NSView {
+        var onFrameChange: (NSRect) -> Void
+
+        init(onFrameChange: @escaping (NSRect) -> Void) {
+            self.onFrameChange = onFrameChange
+            super.init(frame: .zero)
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            updateWindowFrame()
+        }
+
+        override func layout() {
+            super.layout()
+            updateWindowFrame()
+        }
+
+        func updateWindowFrame() {
+            guard let window else { return }
+            onFrameChange(window.frame)
+        }
+    }
+}
+
+struct ProcessDetailIsland<Content: View>: View {
+    let kind: ProcessDetailPanel.Kind
+    let content: Content
+    @ObservedObject private var viewModel: BoringViewModel
+    @State private var isPresented = false
+    @StateObject private var popoverController = ProcessDetailPopoverController()
+
+    init(
+        kind: ProcessDetailPanel.Kind,
+        viewModel: BoringViewModel,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.kind = kind
+        self.content = content()
+        _viewModel = ObservedObject(wrappedValue: viewModel)
+    }
+
+    var body: some View {
+        content
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isPresented.toggle()
+            }
+            .popover(
+                isPresented: $isPresented,
+                attachmentAnchor: .rect(.bounds),
+                arrowEdge: .bottom
+            ) {
+                ProcessDetailPanel(kind: kind, popoverController: popoverController)
+                    .preferredColorScheme(.dark)
+            }
+            .onChange(of: isPresented) { _, presented in
+                viewModel.isProcessDetailPopoverActive = presented
+                if presented {
+                    popoverController.startMonitoring()
+                } else {
+                    popoverController.stopMonitoring()
+                }
+            }
+            .onChange(of: popoverController.dismissRequested) { _, requested in
+                guard requested else { return }
+                popoverController.consumeDismissRequest()
+                isPresented = false
+            }
+            .onDisappear {
+                popoverController.stopMonitoring()
+                viewModel.isProcessDetailPopoverActive = false
+            }
+    }
+}
+
 struct ProcessDetailPanel: View {
     enum Kind {
         case memory
@@ -315,6 +471,7 @@ struct ProcessDetailPanel: View {
     }
 
     let kind: Kind
+    var popoverController: ProcessDetailPopoverController?
     @ObservedObject private var monitor = SystemMonitorManager.shared
 
     private var processes: [MonitoredProcess] {
@@ -367,15 +524,15 @@ struct ProcessDetailPanel: View {
             }
         }
         .frame(width: 340, height: 384, alignment: .top)
+        .padding(.vertical, 8)
         .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.black)
+            if let popoverController {
+                ProcessDetailPopoverWindowTracker { frame in
+                    popoverController.windowFrame = frame
+                }
+                .allowsHitTesting(false)
+            }
         }
-        .overlay {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private var header: some View {
@@ -434,116 +591,6 @@ private struct ProcessRow: View {
         switch kind {
         case .memory: MetricIslandView.formatBytes(process.memoryBytes)
         case .cpu: String(format: "%.1f%%", process.cpuPercent)
-        }
-    }
-}
-
-@MainActor
-final class ProcessDetailWindowManager {
-    static let shared = ProcessDetailWindowManager()
-
-    private static let panelSize = NSSize(width: 340, height: 384)
-
-    private var window: BoringNotchSkyLightWindow?
-    private var activeKind: ProcessDetailPanel.Kind?
-    private var mouseDownGlobal: Any?
-    private var mouseDownLocal: Any?
-    private var scheduledHide: Task<Void, Never>?
-
-    private init() {}
-
-    var isShowing: Bool { window != nil }
-
-    func toggle(kind: ProcessDetailPanel.Kind, for viewModel: BoringViewModel) {
-        scheduledHide?.cancel()
-        scheduledHide = nil
-        if activeKind == kind {
-            hide()
-        } else {
-            show(kind: kind, for: viewModel)
-        }
-    }
-
-    func show(kind: ProcessDetailPanel.Kind, for viewModel: BoringViewModel) {
-        hide()
-        activeKind = kind
-
-        guard let screen = viewModel.screenUUID.flatMap({ NSScreen.screen(withUUID: $0) }) ?? NSScreen.main else {
-            activeKind = nil
-            return
-        }
-        let screenFrame = screen.frame
-        let notchBottomY = screenFrame.maxY - windowSize.height
-        let frame = NSRect(
-            x: screenFrame.midX - Self.panelSize.width / 2,
-            y: notchBottomY - IslandWindowManager.islandGap - Self.panelSize.height,
-            width: Self.panelSize.width,
-            height: Self.panelSize.height
-        )
-
-        let panel = BoringNotchSkyLightWindow(
-            contentRect: frame,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
-        panel.level = .mainMenu + 4
-        panel.contentView = NSHostingView(
-            rootView: ProcessDetailPanel(kind: kind).preferredColorScheme(.dark)
-        )
-        panel.orderFrontRegardless()
-        NotchSpaceManager.shared.notchSpace.windows.insert(panel)
-        window = panel
-        installDismissMonitors()
-    }
-
-    func hide() {
-        scheduledHide?.cancel()
-        scheduledHide = nil
-        removeDismissMonitors()
-        activeKind = nil
-        if let window {
-            NotchSpaceManager.shared.notchSpace.windows.remove(window)
-            window.close()
-            self.window = nil
-        }
-    }
-
-    private func installDismissMonitors() {
-        removeDismissMonitors()
-        mouseDownGlobal = NSEvent.addGlobalMonitorForEvents(
-            matching: [.leftMouseDown, .rightMouseDown]
-        ) { [weak self] _ in
-            Task { @MainActor in self?.handleOutsideClick() }
-        }
-        mouseDownLocal = NSEvent.addLocalMonitorForEvents(
-            matching: [.leftMouseDown, .rightMouseDown]
-        ) { [weak self] event in
-            Task { @MainActor in self?.handleOutsideClick() }
-            return event
-        }
-    }
-
-    private func removeDismissMonitors() {
-        if let mouseDownGlobal { NSEvent.removeMonitor(mouseDownGlobal) }
-        if let mouseDownLocal { NSEvent.removeMonitor(mouseDownLocal) }
-        mouseDownGlobal = nil
-        mouseDownLocal = nil
-    }
-
-    private func handleOutsideClick() {
-        guard let window, activeKind != nil else { return }
-        let location = NSEvent.mouseLocation
-        if window.frame.contains(location) {
-            scheduledHide?.cancel()
-            scheduledHide = nil
-            return
-        }
-        guard scheduledHide == nil else { return }
-        scheduledHide = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(250))
-            guard !Task.isCancelled else { return }
-            self?.hide()
         }
     }
 }
